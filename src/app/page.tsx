@@ -1,18 +1,19 @@
 'use client';
 
+import { useSession, signIn, signOut } from 'next-auth/react';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import html2canvas from 'html2canvas';
 
-import { BoardCard } from '../components/BoardCard';
-import { BoardSidebar } from '../components/BoardSidebar';
-import { BoardGroups } from '../components/BoardGroups';
-import { BoardTabs } from '../components/BoardTabs';
-import { BoardToolbar } from '../components/BoardToolbar';
-import { GROUP_COLORS, SYMBOLS } from '../lib/constants';
-import { createId } from '../lib/ids';
-import type { Board, Card, Group } from '../lib/types';
-import { useBoardPersistence } from '../lib/useBoardPersistence';
+import { BoardCard } from '@/components/BoardCard';
+import { BoardSidebar } from '@/components/BoardSidebar';
+import { BoardGroups } from '@/components/BoardGroups';
+import { BoardTabs } from '@/components/BoardTabs';
+import { BoardToolbar } from '@/components/BoardToolbar';
+import { GROUP_COLORS, SYMBOLS } from '@/lib/constants';
+import { createId } from '@/lib/ids';
+import type { Board, Card, Group } from '@/lib/types';
+import { useBoardPersistence } from '@/lib/useBoardPersistence';
 
 const ACTION_BTN_CLASS =
   "action-btn flex items-center gap-[6px] px-[12px] py-[6px] rounded-[6px] border border-[rgba(255,255,255,0.4)] bg-[rgba(0,0,0,0.4)] font-['Work_Sans'] font-bold text-[13px] cursor-pointer backdrop-blur-[4px] hover:bg-[rgba(0,0,0,0.7)] hover:border-[rgba(255,255,255,0.8)] transition-all duration-200 text-white";
@@ -35,6 +36,7 @@ const INITIAL_BOARDS: Board[] = [
 
 export default function QuadroCapiApp() {
   // --- STATO DELLE LAVAGNE & AUTOSAVE ---
+  const { data: session } = useSession();
   const [boards, setBoards] = useState<Board[]>(INITIAL_BOARDS);
   const [activeBoardId, setActiveBoardId] = useState('b_initial');
   const [tabMenuOpen, setTabMenuOpen] = useState<{
@@ -792,6 +794,7 @@ export default function QuadroCapiApp() {
           />
         </div>
       </div>
+      {/* ---------- TOP RIGHT CONTROLS ---------- */}
       <div
         className="absolute top-[8px] right-[16px] z-[100] flex gap-[10px]"
         onClick={(e) => e.stopPropagation()}
@@ -823,17 +826,19 @@ export default function QuadroCapiApp() {
                 />
               </label>
               <button
-                onClick={async () =>
-                  await showAlert('Integrazione Google Drive in arrivo!')
-                }
-                className={MENU_ITEM_CLASS}
+                onClick={async () => {
+                  if (!session) return;
+                  await showAlert('Integrazione Google Drive in arrivo!');
+                }}
+                disabled={!session}
+                className={`${MENU_ITEM_CLASS} ${!session ? 'opacity-40 cursor-not-allowed hover:bg-transparent' : ''}`}
               >
                 <Image
                   src="/drive-logo.png"
                   alt="Drive"
                   width={18}
                   height={18}
-                  className="object-contain"
+                  className={`object-contain ${!session ? 'grayscale opacity-60' : ''}`}
                   onError={(e) => (e.currentTarget.style.display = 'none')}
                 />
                 <span>Da Google Drive</span>
@@ -841,7 +846,6 @@ export default function QuadroCapiApp() {
             </div>
           )}
         </div>
-
         <div className="relative">
           <button
             onClick={() => setOpenMenu(openMenu === 'save' ? null : 'save')}
@@ -863,17 +867,19 @@ export default function QuadroCapiApp() {
                 <span>In locale (JSON)</span>
               </button>
               <button
-                onClick={async () =>
-                  await showAlert('Integrazione Google Drive in arrivo!')
-                }
-                className={MENU_ITEM_CLASS}
+                onClick={async () => {
+                  if (!session) return;
+                  await showAlert('Integrazione Google Drive in arrivo!');
+                }}
+                disabled={!session}
+                className={`${MENU_ITEM_CLASS} ${!session ? 'opacity-40 cursor-not-allowed hover:bg-transparent' : ''}`}
               >
                 <Image
                   src="/drive-logo.png"
                   alt="Drive"
                   width={18}
                   height={18}
-                  className="object-contain"
+                  className={`object-contain ${!session ? 'grayscale opacity-60' : ''}`}
                   onError={(e) => (e.currentTarget.style.display = 'none')}
                 />
                 <span>Su Google Drive</span>
@@ -881,7 +887,6 @@ export default function QuadroCapiApp() {
             </div>
           )}
         </div>
-
         <button
           onClick={async () => {
             if (boardRef.current) {
@@ -912,6 +917,15 @@ export default function QuadroCapiApp() {
           setShowCreationSymbols={setShowCreationSymbols}
           renderCard={renderCard}
           onAddCard={handleAddCard}
+          session={session ?? null}
+          onSignIn={async () => {
+            await signIn('google');
+          }}
+          onSignOut={async () => {
+            if (await showConfirm('Sei sicuro di voler fare il logout?')) {
+              await signOut();
+            }
+          }}
         />
         {/* ---------- BOARD AREA ---------- */}
         <main className="flex-1 flex flex-col min-w-0 relative">
