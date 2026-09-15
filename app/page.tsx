@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import Image from 'next/image';
 import html2canvas from 'html2canvas';
 
 type Card = {
@@ -37,8 +38,16 @@ const GROUP_COLORS = [
   '#6B4C8A',
   '#2E6E9E',
   '#B23B7E',
+  '#232323',
 ];
 const SYMBOLS = ['T', '🎓', '⛺', '🐺', '🥾', '🧙'];
+
+const ACTION_BTN_CLASS =
+  "action-btn flex items-center gap-[6px] px-[12px] py-[6px] rounded-[6px] border border-[rgba(255,255,255,0.4)] bg-[rgba(0,0,0,0.4)] font-['Work_Sans'] font-bold text-[13px] cursor-pointer backdrop-blur-[4px] hover:bg-[rgba(0,0,0,0.7)] hover:border-[rgba(255,255,255,0.8)] transition-all duration-200";
+const DROPDOWN_CLASS =
+  'dropdown-menu absolute top-[calc(100%+8px)] right-0 bg-[rgba(0,0,0,0.85)] border border-[rgba(255,255,255,0.3)] shadow-2xl rounded-xl p-1.5 flex flex-col min-w-[200px] z-50 backdrop-blur-[4px]';
+const MENU_ITEM_CLASS =
+  "menu-item flex items-center gap-3 px-3 py-2 hover:bg-[rgba(255,255,255,0.15)] rounded-[4px] cursor-pointer font-['Work_Sans'] font-semibold text-[14px] text-white transition-colors text-left w-full";
 
 export default function QuadroCapiApp() {
   const [cards, setCards] = useState<Card[]>([]);
@@ -46,26 +55,33 @@ export default function QuadroCapiApp() {
 
   const [inputValue, setInputValue] = useState('');
   const [newCardSymbols, setNewCardSymbols] = useState<string[]>([]);
+  const [showCreationSymbols, setShowCreationSymbols] = useState(false);
 
-  // Stati UI Locali (Menu)
   const [editingCardId, setEditingCardId] = useState<string | null>(null);
+  const [draggingCardId, setDraggingCardId] = useState<string | null>(null);
   const [editingGroupColor, setEditingGroupColor] = useState<string | null>(
     null
   );
   const [openMenu, setOpenMenu] = useState<'load' | 'save' | null>(null);
+  const [modal, setModal] = useState<{
+    show: boolean;
+    message: string;
+    onConfirm: () => void;
+    onCancel?: () => void;
+  }>({ show: false, message: '', onConfirm: () => {} });
 
-  // Tools
-  const [currentColor, setCurrentColor] = useState(COLORS[0]);
+  const [currentColor, setCurrentColor] = useState<string | null>(null);
   const [currentSize, setCurrentSize] = useState(4);
   const [currentTool, setCurrentTool] = useState<'pencil' | 'eraser'>('pencil');
+  const [cursorPos, setCursorPos] = useState<{ x: number; y: number } | null>(
+    null
+  );
 
-  // Refs
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
   const isDrawing = useRef(false);
   const boardRef = useRef<HTMLDivElement>(null);
 
-  // --- STATI DI TRASCINAMENTO (Drag & Resize liberi) ---
   const dragState = useRef<{
     type: 'group' | 'card' | 'resize';
     id: string;
@@ -77,14 +93,10 @@ export default function QuadroCapiApp() {
     origH?: number;
     moved: boolean;
   } | null>(null);
-  const ghostRef = useRef<HTMLDivElement | null>(null); // Per l'effetto trascinamento del cartellino fuori dal gruppo
+  const ghostRef = useRef<HTMLDivElement | null>(null);
 
-  // Forziamo il re-render solo quando necessario per evitare lag
   const [, forceRender] = useState({});
 
-  // =========================================================================
-  // SETUP CANVAS & EVENTI GLOBALI MOUSE
-  // =========================================================================
   const sizeCanvas = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas || !canvas.parentElement) return;
@@ -115,7 +127,6 @@ export default function QuadroCapiApp() {
     return () => window.removeEventListener('resize', sizeCanvas);
   }, [sizeCanvas]);
 
-  // Gestione movimento mouse per spostamento elementi
   useEffect(() => {
     const handleMove = (e: PointerEvent) => {
       if (!dragState.current) return;
@@ -124,7 +135,6 @@ export default function QuadroCapiApp() {
       const dx = e.clientX - startX;
       const dy = e.clientY - startY;
 
-      // Tolleranza per non bloccare i click
       if (!dragState.current.moved && Math.hypot(dx, dy) > 5)
         dragState.current.moved = true;
       if (!dragState.current.moved) return;
@@ -133,7 +143,6 @@ export default function QuadroCapiApp() {
         setGroups((prev) =>
           prev.map((g) => {
             if (g.id !== id) return g;
-            // Limiti minimi (per non uscire in alto/sinistra)
             return {
               ...g,
               x: Math.max(0, origX + dx),
@@ -153,30 +162,29 @@ export default function QuadroCapiApp() {
           })
         );
       } else if (type === 'card' && ghostRef.current) {
-        // Muoviamo il fantasma del cartellino
-        ghostRef.current.style.left = `${e.clientX + 5}px`;
-        ghostRef.current.style.top = `${e.clientY + 5}px`;
+        ghostRef.current.style.left = `${e.clientX - origX}px`;
+        ghostRef.current.style.top = `${e.clientY - origY}px`;
       }
     };
 
     const handleUp = (e: PointerEvent) => {
       if (!dragState.current) return;
-      const { type, id } = dragState.current;
+      const { type, id, origX, origY } = dragState.current;
 
       if (type === 'card' && ghostRef.current) {
-        // Rilascio del cartellino
         document.body.removeChild(ghostRef.current);
         ghostRef.current = null;
 
-        // Capiamo su quale gruppo è stato rilasciato (usando le API DOM di React è complesso, facciamo hit-test basico)
+        document.querySelectorAll('.dragging-origin').forEach((el) => {
+          el.classList.remove('dragging-origin');
+        });
+
         let droppedGroupId: string | null = null;
         let localX = 0,
           localY = 0;
 
-        // Se eravamo sulla board, controlliamo se il mouse è caduto dentro un gruppo
         if (boardRef.current) {
           const boardRect = boardRef.current.getBoundingClientRect();
-          // Cerca il gruppo al contrario (dall'alto in basso come z-index visivo)
           for (let i = groups.length - 1; i >= 0; i--) {
             const g = groups[i];
             const gx = boardRect.left + g.x;
@@ -188,10 +196,8 @@ export default function QuadroCapiApp() {
               e.clientY <= gy + g.h
             ) {
               droppedGroupId = g.id;
-              // Calcoliamo la coordinata relativa!
-              // Sottraiamo l'header (ca. 45px)
-              localX = Math.max(0, e.clientX - gx - 20); // 20px padding
-              localY = Math.max(0, e.clientY - gy - 45);
+              localX = Math.max(0, e.clientX - gx - (origX || 20));
+              localY = Math.max(0, e.clientY - gy - (origY || 25));
               break;
             }
           }
@@ -203,7 +209,6 @@ export default function QuadroCapiApp() {
             if (droppedGroupId) {
               return { ...c, groupId: droppedGroupId, px: localX, py: localY };
             } else {
-              // Rilasciato fuori dai gruppi = torna in sidebar
               return { ...c, groupId: null, px: undefined, py: undefined };
             }
           })
@@ -211,7 +216,8 @@ export default function QuadroCapiApp() {
       }
 
       dragState.current = null;
-      forceRender({}); // Forza un aggiornamento leggero per pulire stati visivi se serviva
+      setDraggingCardId(null);
+      forceRender({});
     };
 
     document.addEventListener('pointermove', handleMove);
@@ -222,9 +228,6 @@ export default function QuadroCapiApp() {
     };
   }, [groups]);
 
-  // =========================================================================
-  // LOGICA DI DISEGNO (Mano libera sul canvas)
-  // =========================================================================
   const getPos = (e: React.PointerEvent) => {
     const canvas = canvasRef.current;
     if (!canvas) return { x: 0, y: 0 };
@@ -237,6 +240,7 @@ export default function QuadroCapiApp() {
 
   const startDrawing = (e: React.PointerEvent) => {
     if (e.button !== 0 || dragState.current) return;
+    if (currentTool === 'pencil' && !currentColor) return;
     isDrawing.current = true;
     const ctx = ctxRef.current;
     if (!ctx) return;
@@ -244,7 +248,7 @@ export default function QuadroCapiApp() {
     const pos = getPos(e);
     ctx.globalCompositeOperation =
       currentTool === 'eraser' ? 'destination-out' : 'source-over';
-    ctx.strokeStyle = currentColor;
+    ctx.strokeStyle = currentColor || '#000';
     ctx.lineWidth =
       (currentTool === 'eraser' ? currentSize * 3 : currentSize) *
       (window.devicePixelRatio || 1);
@@ -255,6 +259,13 @@ export default function QuadroCapiApp() {
   };
 
   const draw = (e: React.PointerEvent) => {
+    if (currentTool === 'eraser') {
+      const canvas = canvasRef.current;
+      if (canvas) {
+        const rect = canvas.getBoundingClientRect();
+        setCursorPos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+      }
+    }
     if (!isDrawing.current || !ctxRef.current) return;
     const pos = getPos(e);
     ctxRef.current.lineTo(pos.x, pos.y);
@@ -268,9 +279,6 @@ export default function QuadroCapiApp() {
     (e.target as HTMLElement).releasePointerCapture(e.pointerId);
   };
 
-  // =========================================================================
-  // GESTIONE STATO APP
-  // =========================================================================
   const handleAddCard = (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputValue.trim()) return;
@@ -285,6 +293,37 @@ export default function QuadroCapiApp() {
     ]);
     setInputValue('');
     setNewCardSymbols([]);
+    setShowCreationSymbols(false);
+  };
+
+  const showConfirm = (message: string): Promise<boolean> => {
+    return new Promise((resolve) => {
+      setModal({
+        show: true,
+        message,
+        onConfirm: () => {
+          setModal({ show: false, message: '', onConfirm: () => {} });
+          resolve(true);
+        },
+        onCancel: () => {
+          setModal({ show: false, message: '', onConfirm: () => {} });
+          resolve(false);
+        },
+      });
+    });
+  };
+
+  const showAlert = (message: string) => {
+    return new Promise<void>((resolve) => {
+      setModal({
+        show: true,
+        message,
+        onConfirm: () => {
+          setModal({ show: false, message: '', onConfirm: () => {} });
+          resolve();
+        },
+      });
+    });
   };
 
   const handleAddGroup = () => {
@@ -293,7 +332,7 @@ export default function QuadroCapiApp() {
       ...groups,
       {
         id: Math.random().toString(36).substring(2, 9),
-        name: 'Nuovo gruppo',
+        name: 'Nuova Staff',
         color: GROUP_COLORS[n % GROUP_COLORS.length],
         x: 30 + (n % 4) * 40,
         y: 30 + (n % 4) * 30,
@@ -303,25 +342,81 @@ export default function QuadroCapiApp() {
     ]);
   };
 
+  const handleExportJSON = () => {
+    const data = {
+      state: { cards, groups },
+      canvas: canvasRef.current?.toDataURL('image/png'),
+    };
+    const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'quadrocapi.json';
+    a.click();
+    URL.revokeObjectURL(url);
+    setOpenMenu(null);
+  };
+
+  const handleImportJSON = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+      try {
+        const data = JSON.parse(ev.target?.result as string);
+        if (data.state) {
+          setCards(data.state.cards || []);
+          setGroups(data.state.groups || []);
+        }
+        if (data.canvas && ctxRef.current && canvasRef.current) {
+          const img = new window.Image();
+          img.onload = () => {
+            ctxRef.current?.clearRect(
+              0,
+              0,
+              canvasRef.current!.width,
+              canvasRef.current!.height
+            );
+            ctxRef.current?.drawImage(
+              img,
+              0,
+              0,
+              canvasRef.current!.width,
+              canvasRef.current!.height
+            );
+          };
+          img.src = data.canvas;
+        }
+      } catch {
+        await showAlert('Errore caricamento file.');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+    setOpenMenu(null);
+  };
+
   const initCardDrag = (
     e: React.PointerEvent,
     card: Card,
     htmlEl: HTMLElement
   ) => {
     e.stopPropagation();
-    if (e.button !== 0) return; // Solo tasto sinistro
+    if (e.button !== 0) return;
     setEditingCardId(null);
     setEditingGroupColor(null);
+    setDraggingCardId(card.id);
 
-    // Creiamo il ghost element per il drag libero
+    htmlEl.classList.add('dragging-origin');
+
     const rect = htmlEl.getBoundingClientRect();
     const ghost = htmlEl.cloneNode(true) as HTMLDivElement;
+    ghost.className = 'tag ghost-tag';
     ghost.style.position = 'fixed';
     ghost.style.zIndex = '9999';
     ghost.style.pointerEvents = 'none';
-    ghost.style.width = `${rect.width}px`;
-    ghost.style.left = `${e.clientX + 5}px`;
-    ghost.style.top = `${e.clientY + 5}px`;
+    ghost.style.left = `${e.clientX - rect.width / 2}px`;
+    ghost.style.top = `${e.clientY - rect.height / 2}px`;
     ghost.style.transform = 'rotate(-3deg) scale(1.05)';
     ghost.style.boxShadow = '0 8px 18px rgba(0,0,0,0.4)';
     document.body.appendChild(ghost);
@@ -332,70 +427,69 @@ export default function QuadroCapiApp() {
       id: card.id,
       startX: e.clientX,
       startY: e.clientY,
-      origX: 0,
-      origY: 0,
+      origX: rect.width / 2,
+      origY: rect.height / 2,
       moved: false,
     };
   };
 
-  // =========================================================================
-  // RENDER SINGOLA CARD
-  // =========================================================================
   const renderCard = (card: Card, inGroup: boolean = false) => {
+    const isDragging = draggingCardId === card.id;
     return (
       <div
         key={card.id}
         onPointerDown={(e) => initCardDrag(e, card, e.currentTarget)}
-        className={`relative bg-[var(--tag-bg)] border border-[var(--tag-border)] rounded-[8px] px-[20px] py-[12px] font-['Space_Grotesk'] font-semibold text-[20px] text-[#3a2f1a] shadow-[0_3px_6px_var(--shadow)] cursor-grab active:cursor-grabbing touch-none leading-[1.15] max-w-[240px] break-words ${inGroup ? 'absolute' : ''} ${card.symbols.length > 0 ? 'pb-[34px]' : ''}`}
-        style={
-          inGroup
-            ? { left: card.px ?? 14, top: card.py ?? 14, fontSize: '22px' }
-            : {}
-        }
+        className={`tag ${inGroup ? 'in-group' : ''} ${card.symbols.length > 0 ? 'has-symbols' : ''}`}
+        style={{
+          ...(isDragging ? { opacity: 0.25 } : {}),
+          ...(inGroup
+            ? { left: card.px ?? 14, top: card.py ?? 14, position: 'absolute' }
+            : {}),
+        }}
       >
-        <div className="absolute left-[8px] top-1/2 -translate-y-1/2 w-[9px] h-[9px] rounded-full bg-[radial-gradient(circle_at_35%_35%,#fff,#b9a878_70%)] shadow-[inset_0_0_1px_rgba(0,0,0,0.4)]" />
         {card.name}
 
         {card.symbols.length > 0 && (
-          <div className="absolute left-[12px] bottom-[7px] flex gap-1 items-center pointer-events-none">
+          <div className="card-symbols">
             {card.symbols.map((sym) => (
-              <span
-                key={sym}
-                className="inline-flex items-center justify-center min-w-[23px] h-[23px] px-1 rounded-[5px] bg-white/70 text-[17px] leading-none shadow-[0_1px_2px_rgba(0,0,0,0.12)]"
-              >
+              <span key={sym} className="card-symbol">
                 {sym}
               </span>
             ))}
           </div>
         )}
 
-        {/* Tasto Rimuovi */}
         <button
           onPointerDown={(e) => e.stopPropagation()}
-          onClick={(e) => {
+          onClick={async (e) => {
             e.stopPropagation();
-            setCards(cards.filter((c) => c.id !== card.id));
+            const confirmed = await showConfirm(
+              `Sei sicuro di voler rimuovere ${card.name}?`
+            );
+            if (confirmed) {
+              setCards(cards.filter((c) => c.id !== card.id));
+            }
           }}
-          className="absolute top-[3px] right-[4px] w-[20px] h-[20px] leading-[20px] text-center rounded-full font-['Work_Sans'] text-[15px] font-bold text-[#8a7a4a] bg-transparent border-none cursor-pointer hover:text-[#b23b2e]"
+          className="del"
+          title="Rimuovi cartellino"
         >
           ×
         </button>
 
-        {/* Menu Formazione */}
         <button
           onPointerDown={(e) => e.stopPropagation()}
           onClick={(e) => {
             e.stopPropagation();
             setEditingCardId(editingCardId === card.id ? null : card.id);
           }}
-          className={`absolute bottom-[4px] right-[4px] w-[22px] h-[22px] rounded flex items-center justify-center font-bold text-[14px] cursor-pointer transition-colors ${editingCardId === card.id ? 'bg-[#b23b2e] text-white hover:bg-[#8a2d23]' : 'bg-black/5 text-black/50 hover:bg-black/15'}`}
+          className="absolute bottom-[3px] right-[4px] w-[20px] h-[20px] flex items-center justify-center font-bold text-[15px] cursor-pointer bg-transparent border-none text-[#8a7a4a] hover:text-[#b23b2e] transition-colors"
         >
           {editingCardId === card.id ? '×' : '+'}
         </button>
 
         {editingCardId === card.id && (
           <div
-            className="absolute top-[105%] left-0 p-1.5 bg-[#FFFdf8] rounded-lg shadow-xl border border-[#c9bd9c] z-[100] flex gap-1 cursor-default pointer-events-auto"
+            className="absolute top-[105%] left-0 p-2 bg-transparent rounded-[8px] shadow-none border-none z-[100] flex gap-2 cursor-default pointer-events-auto"
             onPointerDown={(e) => e.stopPropagation()}
           >
             {SYMBOLS.map((sym) => {
@@ -417,7 +511,7 @@ export default function QuadroCapiApp() {
                       })
                     );
                   }}
-                  className={`w-[26px] h-[26px] rounded flex items-center justify-center text-[16px] cursor-pointer ${isActive ? 'bg-[#3a2f1a] text-[#fffdf7]' : 'bg-[#f3efe6] text-[#3a2f1a] hover:bg-[#e9e2d2]'}`}
+                  className={`w-[24px] h-[24px] rounded-[6px] flex items-center justify-center text-[14px] cursor-pointer transition-all border ${isActive ? 'bg-[#3a2f1a] text-[#fffdf7] font-bold scale-105 shadow border-[#3a2f1a]' : 'bg-[#f3efe6] text-[#3a2f1a] border-[#c9bd9c] hover:bg-[#e9e2d2]'}`}
                 >
                   {sym}
                 </button>
@@ -429,35 +523,44 @@ export default function QuadroCapiApp() {
     );
   };
 
-  // =========================================================================
-  // RENDER APP PRINCIPALE
-  // =========================================================================
   return (
     <div
-      className="flex flex-col h-screen overflow-hidden text-[var(--ink)] font-['Work_Sans'] bg-[var(--wood-dark)]"
+      className="relative flex flex-col h-screen overflow-hidden font-['Work_Sans'] bg-[var(--wood-dark)] select-none"
       onClick={() => {
         setEditingCardId(null);
         setOpenMenu(null);
         setEditingGroupColor(null);
       }}
     >
-      {/* ---------- BANNER ---------- */}
-      <div className="w-full overflow-hidden bg-gradient-to-r from-[var(--wood-dark)] via-[var(--wood)] to-[var(--wood-dark)] border-b-[2px] border-black/35 shadow-[0_2px_8px_rgba(0,0,0,0.3)] shrink-0 z-20 flex items-center h-[52px]">
-        {/* LOGO */}
-        <div className="shrink-0 relative h-full flex items-center ml-4 mr-6 w-[50px] justify-center">
-          <div className="absolute inset-0 bg-white/40 blur-[10px] rounded-full scale-[1.3]" />
-          <img
-            src="/icon.png"
-            alt=""
-            className="h-[38px] w-auto relative drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] object-contain"
-            onError={(e) => (e.currentTarget.style.display = 'none')}
-          />
-        </div>
-
-        {/* MARQUEE */}
-        <div className="flex flex-1 overflow-hidden h-full">
-          <div className="flex w-max animate-[marquee_7s_linear_infinite] h-full items-center">
+      {/* ---------- BANNER CON LOGO E MARQUEE IN GRASSETTO ---------- */}
+      <div className="w-full overflow-hidden bg-gradient-to-r from-[var(--wood-dark)] via-[var(--wood)] to-[var(--wood-dark)] border-b-[2px] border-black/35 shadow-[0_2px_8px_rgba(0,0,0,0.3)] shrink-0 z-20 flex items-center h-[52px] relative">
+        <div className="absolute inset-0 flex items-center overflow-hidden pointer-events-none">
+          <div className="banner-track h-full items-center">
             <span className="inline-block whitespace-nowrap px-[50px] font-['Space_Grotesk'] font-bold text-[22px] tracking-[0.5px] text-[#FFF3DC] drop-shadow-[0_2px_3px_rgba(0,0,0,0.35)]">
+              Il grande gioco del quadro capi
+            </span>
+            <span
+              className="inline-block whitespace-nowrap px-[50px] font-['Space_Grotesk'] font-bold text-[22px] tracking-[0.5px] text-[#FFF3DC] drop-shadow-[0_2px_3px_rgba(0,0,0,0.35)]"
+              aria-hidden="true"
+            >
+              Il grande gioco del quadro capi
+            </span>
+            <span
+              className="inline-block whitespace-nowrap px-[50px] font-['Space_Grotesk'] font-bold text-[22px] tracking-[0.5px] text-[#FFF3DC] drop-shadow-[0_2px_3px_rgba(0,0,0,0.35)]"
+              aria-hidden="true"
+            >
+              Il grande gioco del quadro capi
+            </span>
+            <span
+              className="inline-block whitespace-nowrap px-[50px] font-['Space_Grotesk'] font-bold text-[22px] tracking-[0.5px] text-[#FFF3DC] drop-shadow-[0_2px_3px_rgba(0,0,0,0.35)]"
+              aria-hidden="true"
+            >
+              Il grande gioco del quadro capi
+            </span>
+            <span
+              className="inline-block whitespace-nowrap px-[50px] font-['Space_Grotesk'] font-bold text-[22px] tracking-[0.5px] text-[#FFF3DC] drop-shadow-[0_2px_3px_rgba(0,0,0,0.35)]"
+              aria-hidden="true"
+            >
               Il grande gioco del quadro capi
             </span>
             <span
@@ -469,55 +572,132 @@ export default function QuadroCapiApp() {
           </div>
         </div>
 
-        {/* EXPORT / IMPORT CONTROLS */}
-        <div className="flex gap-2.5 z-10 shrink-0 mr-4">
-          <div className="relative">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setOpenMenu(openMenu === 'load' ? null : 'load');
-              }}
-              className="flex items-center gap-1.5 px-[12px] py-[6px] rounded-[6px] border border-white/40 bg-black/40 text-white font-['Work_Sans'] font-semibold text-[13px] cursor-pointer backdrop-blur-[4px] hover:bg-black/70 hover:border-white/80 transition-all"
-            >
-              📂 Carica Dati
-            </button>
-            {/* Opzioni menu Carica qui... (omesse per brevità, uguali a prima) */}
-          </div>
-          <div className="relative">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setOpenMenu(openMenu === 'save' ? null : 'save');
-              }}
-              className="flex items-center gap-1.5 px-[12px] py-[6px] rounded-[6px] border border-white/40 bg-black/40 text-white font-['Work_Sans'] font-semibold text-[13px] cursor-pointer backdrop-blur-[4px] hover:bg-black/70 hover:border-white/80 transition-all"
-            >
-              💾 Salva Dati
-            </button>
-          </div>
-          <button
-            onClick={async () => {
-              if (boardRef.current) {
-                const c = await html2canvas(boardRef.current, {
-                  backgroundColor: '#FAF8F4',
-                  scale: 2,
-                });
-                const a = document.createElement('a');
-                a.href = c.toDataURL();
-                a.download = 'lavagna.png';
-                a.click();
-              }
-            }}
-            className="flex items-center gap-1.5 px-[12px] py-[6px] rounded-[6px] border border-white/40 bg-black/40 text-white font-['Work_Sans'] font-semibold text-[13px] cursor-pointer backdrop-blur-[4px] hover:bg-black/70 hover:border-white/80 transition-all"
-          >
-            📸 Esporta PNG
-          </button>
+        <div className="shrink-0 relative h-full flex items-center ml-4 mr-6 w-[60px] justify-center z-30 bg-[#5C4430]">
+          <div className="absolute inset-0 bg-[#5C4430]" />
+          <img
+            src="/icon.png"
+            alt=""
+            className="h-[38px] w-auto relative z-10 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] object-contain"
+            onError={(e) => (e.currentTarget.style.display = 'none')}
+          />
         </div>
       </div>
 
+      {/* ---------- TOP RIGHT CONTROLS ---------- */}
+      <div
+        className="absolute top-[8px] right-[16px] z-[100] flex gap-[10px]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="relative">
+          <button
+            onClick={() => setOpenMenu(openMenu === 'load' ? null : 'load')}
+            className={ACTION_BTN_CLASS}
+          >
+            📂 Carica quadro
+          </button>
+          {openMenu === 'load' && (
+            <div className={DROPDOWN_CLASS}>
+              <label className={MENU_ITEM_CLASS}>
+                <Image
+                  src="/local-logo.png"
+                  alt="PC"
+                  width={18}
+                  height={18}
+                  className="object-contain"
+                  onError={(e) => (e.currentTarget.style.display = 'none')}
+                />
+                <span>Da locale (PC)</span>
+                <input
+                  type="file"
+                  accept=".json"
+                  onChange={handleImportJSON}
+                  className="hidden"
+                />
+              </label>
+              <button
+                onClick={async () =>
+                  await showAlert('Integrazione Google Drive in arrivo!')
+                }
+                className={MENU_ITEM_CLASS}
+              >
+                <Image
+                  src="/drive-logo.png"
+                  alt="Drive"
+                  width={18}
+                  height={18}
+                  className="object-contain"
+                  onError={(e) => (e.currentTarget.style.display = 'none')}
+                />
+                <span>Da Google Drive</span>
+              </button>
+            </div>
+          )}
+        </div>
+
+        <div className="relative">
+          <button
+            onClick={() => setOpenMenu(openMenu === 'save' ? null : 'save')}
+            className={ACTION_BTN_CLASS}
+          >
+            💾 Salva quadro
+          </button>
+          {openMenu === 'save' && (
+            <div className={DROPDOWN_CLASS}>
+              <button onClick={handleExportJSON} className={MENU_ITEM_CLASS}>
+                <Image
+                  src="/local-logo.png"
+                  alt="PC"
+                  width={18}
+                  height={18}
+                  className="object-contain"
+                  onError={(e) => (e.currentTarget.style.display = 'none')}
+                />
+                <span>In locale (JSON)</span>
+              </button>
+              <button
+                onClick={async () =>
+                  await showAlert('Integrazione Google Drive in arrivo!')
+                }
+                className={MENU_ITEM_CLASS}
+              >
+                <Image
+                  src="/drive-logo.png"
+                  alt="Drive"
+                  width={18}
+                  height={18}
+                  className="object-contain"
+                  onError={(e) => (e.currentTarget.style.display = 'none')}
+                />
+                <span>Su Google Drive</span>
+              </button>
+            </div>
+          )}
+        </div>
+
+        <button
+          onClick={async () => {
+            if (boardRef.current) {
+              const c = await html2canvas(boardRef.current, {
+                backgroundColor: '#FAF8F4',
+                scale: 2,
+              });
+              const a = document.createElement('a');
+              a.href = c.toDataURL();
+              a.download = 'quadrocapi.png';
+              a.click();
+            }
+          }}
+          className={ACTION_BTN_CLASS}
+        >
+          📸 Esporta PNG
+        </button>
+      </div>
+
       <div className="flex flex-1 min-h-0">
-        {/* ---------- SIDEBAR ---------- */}
+        {/* ---------- SIDEBAR ORIGINALE CON TESTI BIANCHI ---------- */}
         <aside
-          className="w-[250px] min-w-[250px] flex flex-col p-[18px_14px_14px] shadow-[inset_-6px_0_14px_rgba(0,0,0,0.25)] z-20 relative"
+          id="sidebar"
+          className="w-[250px] min-w-[250px] flex flex-col p-[18px_14px_14px] shadow-[inset_-6px_0_14px_rgba(0,0,0,0.25)] z-20 relative overflow-hidden"
           style={{
             background:
               'linear-gradient(160deg, var(--wood-light), var(--wood) 60%, var(--wood-dark))',
@@ -529,34 +709,62 @@ export default function QuadroCapiApp() {
 
           <form
             onSubmit={handleAddCard}
-            className="flex flex-col gap-[6px] mb-[14px]"
+            className="flex gap-[6px] mb-[14px] w-full"
           >
-            <div className="flex gap-[6px]">
-              <input
-                type="text"
-                placeholder="Nome…"
-                maxLength={30}
-                autoComplete="off"
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                className="flex-1 min-w-0 p-[9px_10px] rounded-[8px] border border-black/20 font-['Work_Sans'] text-[15px] bg-[var(--paper)] text-[var(--ink)] outline-none focus:outline-[2px] focus:outline-[#E8B84B]"
-              />
-              <button
-                type="submit"
-                className="px-[14px] rounded-[8px] border-none bg-[#2F7A5C] text-white font-semibold text-[14px] cursor-pointer active:translate-y-[1px]"
-              >
-                Aggiungi
-              </button>
-            </div>
-            {/* Opzioni Simboli (uguali a prima)... */}
+            <input
+              type="text"
+              placeholder="Nome…"
+              maxLength={30}
+              autoComplete="off"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              className="flex-1 min-w-0 p-[9px_10px] rounded-[8px] border border-black/20 font-['Work_Sans'] text-[15px] bg-[var(--paper)] text-[var(--ink)] outline-none focus:outline-[2px] focus:outline-[#E8B84B]"
+              style={{ width: 'calc(100% - 98px)' }}
+            />
+            <button
+              type="submit"
+              className="px-[14px] py-[8px] rounded-[8px] border-none bg-[#2F7A5C] text-white font-bold text-[14px] cursor-pointer active:translate-y-[1px] shrink-0 hover:bg-[#256249] w-[92px]"
+            >
+              Aggiungi
+            </button>
           </form>
 
-          <div className="text-white/75 text-[12.5px] m-[0_4px_8px] font-medium">
+          <button
+            type="button"
+            onClick={() => setShowCreationSymbols(!showCreationSymbols)}
+            className="w-full px-[14px] py-[8px] rounded-[8px] border-none text-white font-bold text-[14px] cursor-pointer active:translate-y-[1px] mb-[14px] transition-colors bg-[#2F7A5C] hover:bg-[#256249]"
+          >
+            Formazione
+          </button>
+
+          {showCreationSymbols && (
+            <div className="flex gap-[8px] flex-wrap justify-center p-2.5 bg-white/10 rounded-[8px] mb-[14px]">
+              {SYMBOLS.map((sym) => {
+                const active = newCardSymbols.includes(sym);
+                return (
+                  <button
+                    key={sym}
+                    type="button"
+                    onClick={() =>
+                      setNewCardSymbols((prev) =>
+                        active ? prev.filter((s) => s !== sym) : [...prev, sym]
+                      )
+                    }
+                    className={`w-[30px] h-[30px] rounded-[8px] flex items-center justify-center text-[16px] cursor-pointer transition-all border symbol-formation-btn ${active ? 'bg-[#2a2a2a] font-bold shadow scale-105 border-[#2a2a2a]' : 'bg-white/20 border-transparent hover:bg-white/30'}`}
+                  >
+                    {sym}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          <div className="pool-label text-[12.5px] m-[0_4px_8px] font-medium">
             In che staff li mettiamo?
           </div>
           <div className="flex-1 overflow-y-auto p-[4px] flex flex-wrap content-start gap-[10px]">
             {cards.filter((c) => c.groupId === null).length === 0 ? (
-              <div className="text-white/60 font-['Space_Grotesk'] text-[15px] p-[20px_6px] w-full">
+              <div className="pool-empty font-['Space_Grotesk'] text-[15px] p-[20px_6px] w-full">
                 I capi sono finiti.
                 <br />
                 Siamo stati bravi oppure siamo fottuti.
@@ -571,15 +779,18 @@ export default function QuadroCapiApp() {
 
         {/* ---------- BOARD AREA ---------- */}
         <main className="flex-1 flex flex-col min-w-0 relative">
-          {/* TOOLBAR DISGNO */}
           <div className="flex items-center gap-[14px] p-[10px_16px] bg-gradient-to-b from-[#f3efe6] to-[#e9e2d2] border-b border-[#cfc4a8] shadow-[0_2px_6px_rgba(0,0,0,0.15)] z-[5] flex-wrap relative">
             <div className="flex gap-[6px] items-center">
               {COLORS.map((c) => (
                 <button
                   key={c}
                   onClick={() => {
-                    setCurrentColor(c);
-                    setCurrentTool('pencil');
+                    if (currentColor === c && currentTool === 'pencil') {
+                      setCurrentColor(null);
+                    } else {
+                      setCurrentColor(c);
+                      setCurrentTool('pencil');
+                    }
                   }}
                   className={`w-[26px] h-[26px] rounded-full border-[2px] p-0 cursor-pointer ${currentColor === c && currentTool === 'pencil' ? 'border-[#232323] scale-[1.12]' : 'border-transparent'}`}
                   style={{ background: c }}
@@ -608,14 +819,16 @@ export default function QuadroCapiApp() {
               Gomma
             </button>
             <button
-              onClick={() => {
-                if (confirm('Cancellare tutto?'))
+              onClick={async () => {
+                const confirmed = await showConfirm('Cancellare tutto?');
+                if (confirmed) {
                   ctxRef.current?.clearRect(
                     0,
                     0,
                     canvasRef.current!.width,
                     canvasRef.current!.height
                   );
+                }
               }}
               className="px-[14px] py-[8px] rounded-[8px] border border-[#c9bd9c] font-['Work_Sans'] font-semibold text-[13.5px] bg-[#fffdf7] text-[#3a2f1a] cursor-pointer hover:bg-[#f3ead5]"
             >
@@ -624,13 +837,12 @@ export default function QuadroCapiApp() {
             <div className="w-[1px] h-[26px] bg-[#c9bd9c]" />
             <button
               onClick={handleAddGroup}
-              className="px-[14px] py-[8px] rounded-[8px] border border-[#2E6E9E] bg-[#2E6E9E] text-white font-['Work_Sans'] font-semibold text-[13.5px] cursor-pointer"
+              className="px-[14px] py-[8px] rounded-[8px] border border-[#2E6E9E] bg-[#2E6E9E] text-white font-['Work_Sans'] font-bold text-[13.5px] cursor-pointer active:translate-y-[1px]"
             >
-              + Nuovo gruppo
+              Nuova Staff
             </button>
           </div>
 
-          {/* LAYER LAVAGNA E GRUPPI */}
           <div
             ref={boardRef}
             className="relative flex-1 overflow-hidden"
@@ -642,13 +854,37 @@ export default function QuadroCapiApp() {
             <canvas
               ref={canvasRef}
               className="absolute inset-0 touch-none z-0"
+              style={{
+                cursor:
+                  currentTool === 'eraser'
+                    ? 'none'
+                    : currentTool === 'pencil' && currentColor
+                      ? 'crosshair'
+                      : 'default',
+              }}
               onPointerDown={startDrawing}
               onPointerMove={draw}
               onPointerUp={stopDrawing}
               onPointerCancel={stopDrawing}
+              onPointerLeave={() => setCursorPos(null)}
             />
 
-            {/* LAYER GRUPPI */}
+            {currentTool === 'eraser' && cursorPos && (
+              <div
+                className="absolute z-[1] pointer-events-none"
+                style={{
+                  left: cursorPos.x,
+                  top: cursorPos.y,
+                  width: currentSize * 3,
+                  height: currentSize * 3,
+                  transform: 'translate(-50%, -50%)',
+                  border: '2px solid #3a2f1a',
+                  borderRadius: '50%',
+                  background: 'rgba(255,255,255,0.2)',
+                }}
+              />
+            )}
+
             <div className="absolute inset-0 z-[2] pointer-events-none">
               {groups.map((group) => {
                 const members = cards.filter((c) => c.groupId === group.id);
@@ -663,7 +899,6 @@ export default function QuadroCapiApp() {
                       height: group.h,
                     }}
                   >
-                    {/* Header Trascinabile */}
                     <div
                       onPointerDown={(e) => {
                         if (
@@ -686,7 +921,7 @@ export default function QuadroCapiApp() {
                       style={{ backgroundColor: group.color }}
                     >
                       <div
-                        className="flex-1 font-['Space_Grotesk'] font-bold text-[22px] text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.25)] outline-none cursor-text overflow-hidden text-ellipsis whitespace-nowrap focus:text-clip focus:bg-black/10 focus:rounded-[5px] focus:px-[4px] focus:mx-[-4px]"
+                        className="group-title flex-1 font-['Space_Grotesk'] font-bold text-[22px] drop-shadow-[0_1px_2px_rgba(0,0,0,0.25)] outline-none cursor-text overflow-hidden text-ellipsis whitespace-nowrap focus:text-clip focus:bg-black/10 focus:rounded-[5px] focus:px-[4px] focus:mx-[-4px]"
                         contentEditable
                         suppressContentEditableWarning
                         onBlur={(e) =>
@@ -696,7 +931,8 @@ export default function QuadroCapiApp() {
                                 ? {
                                     ...g,
                                     name:
-                                      e.currentTarget.textContent || 'Gruppo',
+                                      e.currentTarget.textContent?.trim() ||
+                                      'Nuova Staff',
                                   }
                                 : g
                             )
@@ -705,11 +941,10 @@ export default function QuadroCapiApp() {
                       >
                         {group.name}
                       </div>
-                      <div className="font-['Work_Sans'] text-[13px] font-semibold text-white/85 bg-black/20 px-[9px] py-[3px] rounded-[10px]">
+                      <div className="group-count font-['Work_Sans'] text-[13px] font-semibold bg-black/20 px-[9px] py-[3px] rounded-[10px]">
                         {members.length}
                       </div>
 
-                      {/* Tasto Colore */}
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -717,15 +952,15 @@ export default function QuadroCapiApp() {
                             editingGroupColor === group.id ? null : group.id
                           );
                         }}
-                        className="w-[24px] h-[24px] rounded-full bg-black/15 text-white text-[10px] flex items-center justify-center cursor-pointer border-none p-0 font-['Work_Sans']"
+                        className="group-icon-btn w-[24px] h-[24px] rounded-full bg-[rgba(0,0,0,0.15)] text-white text-[10px] flex items-center justify-center cursor-pointer border-none p-0 font-['Work_Sans']"
+                        title="Cambia colore"
                       >
                         ⬤
                       </button>
 
-                      {/* Menu Colori a tendina */}
                       {editingGroupColor === group.id && (
                         <div
-                          className="absolute top-[calc(100%+6px)] right-[30px] p-[10px] bg-[#FFFdf8] rounded-[10px] shadow-[0_8px_20px_rgba(0,0,0,0.3)] border border-[#cfc4a8] z-[100] flex flex-wrap gap-[8px] w-[140px] cursor-default"
+                          className="absolute top-[calc(100%+6px)] right-[30px] p-[10px] bg-[#FFFdf8] rounded-[10px] shadow-[0_8px_20px_rgba(0,0,0,0.3)] border border-[#cfc4a8] z-[100] flex flex-wrap gap-[8px] w-[140px] cursor-default text-black"
                           onPointerDown={(e) => e.stopPropagation()}
                         >
                           {GROUP_COLORS.map((c) => (
@@ -739,37 +974,19 @@ export default function QuadroCapiApp() {
                                 );
                                 setEditingGroupColor(null);
                               }}
-                              className="w-[26px] h-[26px] rounded-full border-2 border-black/10 cursor-pointer"
+                              className="w-[26px] h-[26px] rounded-full border-[1px] border-black/15 cursor-pointer hover:scale-110 transition-transform"
                               style={{ background: c }}
                             />
                           ))}
-                          <div className="flex items-center gap-[6px] w-full font-['Work_Sans'] text-[11.5px] text-[#5a4c30] border-t border-[#e6dcbf] pt-[8px] mt-[2px]">
-                            <span>altro</span>
-                            <input
-                              type="color"
-                              value={group.color}
-                              onChange={(e) =>
-                                setGroups(
-                                  groups.map((g) =>
-                                    g.id === group.id
-                                      ? { ...g, color: e.target.value }
-                                      : g
-                                  )
-                                )
-                              }
-                              className="w-[26px] h-[26px] border-none p-0 bg-transparent cursor-pointer"
-                            />
-                          </div>
                         </div>
                       )}
 
                       <button
-                        onClick={() => {
-                          if (
-                            confirm(
-                              'Eliminare? I cartellini torneranno disponibili.'
-                            )
-                          ) {
+                        onClick={async () => {
+                          const confirmed = await showConfirm(
+                            `Sei sicuro di voler rimuovere ${group.name}? I capi inseriti torneranno disponbili`
+                          );
+                          if (confirmed) {
                             setCards(
                               cards.map((c) =>
                                 c.groupId === group.id
@@ -785,13 +1002,12 @@ export default function QuadroCapiApp() {
                             setGroups(groups.filter((g) => g.id !== group.id));
                           }
                         }}
-                        className="w-[24px] h-[24px] rounded-full bg-black/15 text-white text-[14px] flex items-center justify-center font-bold cursor-pointer border-none p-0"
+                        className="group-delete-btn w-[24px] h-[24px] rounded-full bg-[rgba(0,0,0,0.15)] text-white text-[14px] flex items-center justify-center font-bold cursor-pointer border-none p-0 hover:bg-[rgba(0,0,0,0.25)]"
                       >
                         ×
                       </button>
                     </div>
 
-                    {/* Corpo del gruppo (Area Drop) */}
                     <div className="flex-1 relative overflow-hidden">
                       {members.length === 0 && (
                         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full text-center px-[10px] font-['Space_Grotesk'] text-[17px] text-[#9a917c] pointer-events-none">
@@ -801,7 +1017,6 @@ export default function QuadroCapiApp() {
                       {members.map((card) => renderCard(card, true))}
                     </div>
 
-                    {/* Maniglia Resize */}
                     <div
                       onPointerDown={(e) => {
                         e.stopPropagation();
@@ -835,6 +1050,70 @@ export default function QuadroCapiApp() {
           </div>
         </main>
       </div>
+
+      {modal.show && (
+        <div
+          className="fixed top-0 left-0 w-screen h-screen z-[10000] custom-modal-overlay"
+          style={{
+            background: 'rgba(0,0,0,0.6)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+          onClick={modal.onCancel || modal.onConfirm}
+        >
+          <div
+            className="relative rounded-[12px] shadow-2xl custom-modal-content"
+            style={{
+              background: 'var(--tag-bg)',
+              border: '2px solid var(--tag-border)',
+              boxShadow: '0 12px 48px rgba(40,28,14,0.5)',
+              width: '90%',
+              maxWidth: '420px',
+              padding: '28px',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div
+              className="text-[17px] leading-[1.5] mb-[24px] text-center"
+              style={{
+                fontFamily: "'Space Grotesk', sans-serif",
+                fontWeight: 600,
+                color: '#3a2f1a',
+              }}
+            >
+              {modal.message}
+            </div>
+            <div className="flex gap-[12px] justify-center">
+              {modal.onCancel && (
+                <button
+                  onClick={modal.onCancel}
+                  className="px-[20px] py-[10px] rounded-[8px] font-['Work_Sans'] font-semibold text-[14px] cursor-pointer transition-all duration-200"
+                  style={{
+                    background: 'rgba(0,0,0,0.08)',
+                    border: '1px solid rgba(0,0,0,0.15)',
+                    color: '#3a2f1a',
+                  }}
+                >
+                  Annulla
+                </button>
+              )}
+              <button
+                onClick={modal.onConfirm}
+                className="px-[20px] py-[10px] rounded-[8px] font-['Work_Sans'] font-semibold text-[14px] cursor-pointer transition-all duration-200"
+                style={{
+                  background: '#3a2f1a',
+                  border: '1px solid #2a1f0a',
+                  color: '#fffdf7',
+                }}
+              >
+                {modal.onCancel ? 'Conferma' : 'OK'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
