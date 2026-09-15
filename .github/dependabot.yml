@@ -1,0 +1,20 @@
+version: 2
+updates:
+  # Aggiorna i pacchetti NPM
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+
+  # Aggiorna le versioni delle GitHub Actions nel file ci.yml
+  - package-ecosystem: "github-actions"
+    directory: "/.github/workflows/"
+    schedule:
+      interval: "weekly"
+
+  # Aggiorna l'immagine di base nel Dockerfile (es. node:20-alpine)
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "monthly"

@@ -1,0 +1,33 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Work+Sans:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --wood-dark: #5C4430;
+  --wood: #7A5B3C;
+  --wood-light: #93724A;
+  --board-bg: #FAF8F4;
+  --ink: #232323;
+  --tag-bg: #FFF6DC;
+  --tag-border: #E4D19C;
+  --paper: #FCFBF8;
+  --shadow: rgba(40,28,14,0.35);
+}
+
+html, body {
+  margin: 0; 
+  height: 100%; 
+  overflow: hidden;
+  background: var(--wood-dark);
+  font-family: 'Work Sans', sans-serif;
+  color: var(--ink);
+  touch-action: none;
+  user-select: none;
+}
+
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}

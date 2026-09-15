@@ -1,0 +1,51 @@
+name: CI & Validation
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "**" ] # Gira su QUALSIASI branch quando si apre o aggiorna una PR
+
+jobs:
+  build-and-test:
+    name: Build, Lint & Validate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Validate Config Files (Syntax & Require)
+        # Questo script verifica che i file di configurazione non siano rotti.
+        # Usa "node -c" per il controllo sintattico e prova a farne il require.
+        run: |
+          echo "Verifica sintassi release.config.js..."
+          if [ -f release.config.js ]; then
+            node -c release.config.js
+            node -e "require('./release.config.js')"
+          fi
+          
+          echo "Verifica sintassi next.config.ts..."
+          if [ -f next.config.ts ]; then
+            npx tsc --noEmit next.config.ts
+          fi
+
+      - name: Check Types
+        # Fa fallire la pipeline se ci sono errori TypeScript
+        run: npx tsc --noEmit
+
+      - name: Run Linter
+        run: npm run lint
+
+      - name: Build Test
+        # Verifica che il progetto riesca a buildare con successo
+        run: npm run build
