@@ -18,4 +18,4 @@ export const GROUP_COLORS = [
   '#232323',
 ];
 
-export const SYMBOLS = ['T', '🎓', '⛺', '🐺', '🥾', '🧙'];
+export const SYMBOLS = ['T', '🐺', '⛺', '🥾', '🎓', '🧙'];
