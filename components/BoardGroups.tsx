@@ -80,20 +80,17 @@ export function BoardGroups({
                 className="group-title flex-1 font-['Space_Grotesk'] font-bold text-[22px] drop-shadow-[0_1px_2px_rgba(0,0,0,0.25)] outline-none cursor-text overflow-hidden text-ellipsis whitespace-nowrap focus:text-clip focus:bg-black/10 focus:rounded-[5px] focus:px-[4px] focus:mx-[-4px]"
                 contentEditable
                 suppressContentEditableWarning
-                onBlur={(event) =>
+                onBlur={(event) => {
+                  const name =
+                    event.currentTarget.textContent?.trim() || 'Nuova Staff';
                   setGroups((prev) =>
                     prev.map((currentGroup) =>
                       currentGroup.id === group.id
-                        ? {
-                            ...currentGroup,
-                            name:
-                              event.currentTarget.textContent?.trim() ||
-                              'Nuova Staff',
-                          }
+                        ? { ...currentGroup, name }
                         : currentGroup
                     )
-                  )
-                }
+                  );
+                }}
               >
                 {group.name}
               </div>
