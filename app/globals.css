@@ -5,29 +5,313 @@
 @tailwind utilities;
 
 :root {
-  --wood-dark: #5C4430;
-  --wood: #7A5B3C;
-  --wood-light: #93724A;
-  --board-bg: #FAF8F4;
+  --wood-dark: #5c4430;
+  --wood: #7a5b3c;
+  --wood-light: #93724a;
+  --board-bg: #faf8f4;
   --ink: #232323;
-  --tag-bg: #FFF6DC;
-  --tag-border: #E4D19C;
-  --paper: #FCFBF8;
-  --shadow: rgba(40,28,14,0.35);
+  --tag-bg: #fff6dc;
+  --tag-border: #e4d19c;
+  --paper: #fcfbf8;
+  --shadow: rgba(40, 28, 14, 0.35);
 }
 
-html, body {
-  margin: 0; 
-  height: 100%; 
+html,
+body {
+  margin: 0;
+  height: 100%;
   overflow: hidden;
   background: var(--wood-dark);
   font-family: 'Work Sans', sans-serif;
   color: var(--ink);
   touch-action: none;
   user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Stili originali dei cartellini e simboli per evitare conflitti Tailwind */
+.tag {
+  position: relative;
+  background: var(--tag-bg);
+  border: 1px solid var(--tag-border);
+  border-radius: 8px;
+  padding: 12px 30px 12px 12px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 600;
+  font-size: 20px;
+  color: #3a2f1a;
+  box-shadow: 0 3px 6px var(--shadow);
+  cursor: grab;
+  touch-action: none;
+  line-height: 1.15;
+  max-width: 240px;
+  word-break: break-word;
+}
+.tag::before {
+  content: '';
+  display: none;
+}
+.tag .del {
+  position: absolute;
+  top: 3px;
+  right: 4px;
+  width: 20px;
+  height: 20px;
+  line-height: 20px;
+  text-align: center;
+  border-radius: 50%;
+  font-family: 'Work Sans', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  color: #8a7a4a;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+.tag .del:hover {
+  color: #b23b2e;
+}
+
+.tag .del,
+.tag button[class*='absolute'] {
+  color: #8a7a4a !important;
+  background: transparent !important;
+}
+
+.tag .del:hover,
+.tag button[class*='absolute']:hover {
+  color: #b23b2e !important;
+}
+
+.tag button {
+  color: #8a7a4a !important;
+}
+
+.tag button:hover {
+  color: #b23b2e !important;
+}
+
+.symbol-formation-btn {
+  color: #3a2f1a !important;
+}
+
+/* Override white text on sidebar buttons when NOT in tag */
+#sidebar > button,
+#sidebar form > button {
+  color: white !important;
+}
+
+/* But tag buttons inside sidebar must stay dark */
+#sidebar .tag .del,
+#sidebar .tag button {
+  color: #8a7a4a !important;
+}
+
+#sidebar .tag .del:hover,
+#sidebar .tag button:hover {
+  color: #b23b2e !important;
+}
+
+/* Formation symbols must be dark */
+.symbol-formation-btn {
+  color: #3a2f1a !important;
+}
+
+#sidebar .symbol-formation-btn {
+  color: #3a2f1a !important;
+}
+.tag.in-group {
+  font-size: 22px;
+  position: absolute;
+  max-width: 240px;
+  width: max-content;
+}
+
+.card-symbols {
+  position: absolute;
+  left: 12px;
+  bottom: 6px;
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  pointer-events: none;
+}
+.card-symbol {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 23px;
+  height: 23px;
+  padding: 0 4px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  font-size: 16px;
+  line-height: 1;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+.tag.has-symbols {
+  padding-bottom: 8px;
+  width: auto !important;
+  max-width: 280px !important;
+  min-height: fit-content !important;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.card-symbols {
+  position: static !important;
+  left: auto;
+  bottom: auto;
+  max-width: 100%;
+  display: grid !important;
+  grid-template-columns: repeat(3, auto);
+  gap: 4px;
+  margin-top: 8px;
+  padding-left: 0;
+  justify-content: start;
+}
+.ghost-tag {
+  position: fixed;
+  z-index: 9999;
+  pointer-events: none;
+  transform: rotate(-3deg) scale(1.05);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.4);
 }
 
 @keyframes marquee {
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+.banner-track {
+  display: flex;
+  width: max-content;
+  animation: marquee 30s linear infinite;
+  will-change: transform;
+}
+.banner-track span {
+  font-weight: 700 !important;
+  color: #fff3dc !important;
+}
+
+/* Force white text in sidebar and groups */
+#sidebar h1,
+#sidebar button,
+#sidebar .pool-label,
+#sidebar .pool-empty {
+  color: white !important;
+}
+
+#sidebar button {
+  font-weight: 700 !important;
+}
+
+.group-title {
+  color: white !important;
+  font-weight: 700 !important;
+}
+
+.group-count,
+.group-icon-btn {
+  color: white !important;
+}
+
+/* X button in group header must be white */
+.group-delete-btn {
+  color: white !important;
+}
+
+.action-btn {
+  color: white !important;
+  font-weight: 700 !important;
+}
+
+button[class*='tbtn'],
+button[class*='border-[#2E6E9E]'] {
+  font-weight: 700 !important;
+  color: white !important;
+}
+
+.tag.dragging-origin {
+  opacity: 0.25 !important;
+}
+
+/* Menu dropdown styling */
+.dropdown-menu {
+  background: rgba(0, 0, 0, 0.4) !important;
+  border: 1px solid rgba(255, 255, 255, 0.4) !important;
+  backdrop-filter: blur(4px) !important;
+  border-radius: 6px !important;
+  padding: 4px !important;
+  gap: 2px;
+}
+
+.dropdown-menu * {
+  color: white !important;
+}
+
+.menu-item {
+  background: transparent !important;
+  border: none !important;
+  border-radius: 4px !important;
+  font-weight: 600 !important;
+  display: flex !important;
+  align-items: center !important;
+  padding: 8px 12px !important;
+  gap: 12px !important;
+  cursor: pointer !important;
+}
+
+.menu-item img {
+  flex-shrink: 0;
+  width: 18px !important;
+  height: 18px !important;
+}
+
+.menu-item span {
+  flex: 1;
+  text-align: left;
+}
+
+.menu-item:hover {
+  background: rgba(255, 255, 255, 0.15) !important;
+}
+
+/* Custom modal styles */
+.custom-modal-overlay {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.custom-modal-content {
+  animation: slideIn 0.25s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.custom-modal-content button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
 }
