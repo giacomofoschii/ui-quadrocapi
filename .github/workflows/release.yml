@@ -1,31 +1,20 @@
-name: Release
+name: Release Please
 on:
   push:
     branches:
       - main
+
 jobs:
   release:
-    name: Semantic Release
+    name: Release PR
     runs-on: ubuntu-latest
     permissions:
-      contents: write # Necessario per pushare tag e changelog
-      issues: write
+      contents: write
       pull-requests: write
+
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+      - name: Create or update release PR
+        uses: googleapis/release-please-action@v4
         with:
-          fetch-depth: 0 # Necessario per leggere tutta la storia dei commit
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-
-      - name: Install Dependencies
-        run: npm ci
-
-      - name: Run Semantic Release
-        run: npx semantic-release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          release-type: node
+          token: ${{ secrets.GITHUB_TOKEN }}
