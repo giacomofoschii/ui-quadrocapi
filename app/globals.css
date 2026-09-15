@@ -176,7 +176,7 @@ body {
   position: fixed;
   z-index: 9999;
   pointer-events: none;
-  transform: rotate(-3deg) scale(1.05);
+  transform: rotate(-3deg);
   box-shadow: 0 8px 18px rgba(0, 0, 0, 0.4);
 }
 
