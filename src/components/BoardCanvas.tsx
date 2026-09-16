@@ -76,7 +76,7 @@ export function BoardCanvas({
     >
       <canvas
         ref={canvasRef}
-        className="absolute inset-0 touch-none z-0"
+        className={`absolute inset-0 z-0 ${currentTool === 'pencil' && !currentColor ? 'touch-pan-x touch-pan-y' : 'touch-none'}`}
         style={{
           cursor:
             currentTool === 'eraser'

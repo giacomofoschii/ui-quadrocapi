@@ -1,5 +1,6 @@
 type BoardTabsProps = {
   boards: { id: string; name: string }[];
+  className?: string;
   activeBoardId: string;
   tabMenuOpen: { id: string; left: number; bottom: number } | null;
   onSwitchBoard: (id: string) => void;
@@ -24,6 +25,7 @@ const TAB_MENU_ITEM_CLASS =
 
 export function BoardTabs({
   boards,
+  className = '',
   activeBoardId,
   tabMenuOpen,
   onSwitchBoard,
@@ -35,7 +37,9 @@ export function BoardTabs({
 }: BoardTabsProps) {
   return (
     <>
-      <div className="flex items-center h-[54px] bg-gradient-to-r from-[var(--wood-dark)] via-[var(--wood)] to-[var(--wood-dark)] border-t-[2px] border-black/35 shadow-[0_-2px_8px_rgba(0,0,0,0.3)] pl-[24px] pr-4 gap-[8px] shrink-0 overflow-x-auto select-none relative z-[30]">
+      <div
+        className={`${className} flex items-center h-[54px] bg-gradient-to-r from-[var(--wood-dark)] via-[var(--wood)] to-[var(--wood-dark)] border-t-[2px] border-black/35 shadow-[0_-2px_8px_rgba(0,0,0,0.3)] pl-[24px] pr-4 gap-[8px] shrink-0 overflow-x-auto select-none relative z-[30]`}
+      >
         {boards.map((b) => (
           <div
             key={b.id}
