@@ -667,6 +667,18 @@ function QuadroCapiApp() {
     setOpenMenu(null);
   };
 
+  const handleExportPNG = async () => {
+    if (!boardRef.current) return;
+    const canvas = await html2canvas(boardRef.current, {
+      backgroundColor: '#FAF8F4',
+      scale: 2,
+    });
+    const link = document.createElement('a');
+    link.href = canvas.toDataURL();
+    link.download = 'quadrocapi.png';
+    link.click();
+  };
+
   const handleImportJSON = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -853,7 +865,7 @@ function QuadroCapiApp() {
         className="mobile-action-bar absolute top-[8px] left-[112px] right-[8px] z-[100] flex gap-[10px] overflow-x-auto pb-1 md:left-auto md:right-[16px]"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="relative">
+        <div className="mobile-desktop-only relative">
           <button
             onClick={() => setOpenMenu(openMenu === 'load' ? null : 'load')}
             className={ACTION_BTN_CLASS}
@@ -897,7 +909,7 @@ function QuadroCapiApp() {
             </div>
           )}
         </div>
-        <div className="relative">
+        <div className="mobile-desktop-only relative">
           <button
             onClick={() => setOpenMenu(openMenu === 'save' ? null : 'save')}
             className={ACTION_BTN_CLASS}
@@ -987,6 +999,12 @@ function QuadroCapiApp() {
             setShowCreationSymbols={setShowCreationSymbols}
             renderCard={renderCard}
             onAddCard={handleAddCard}
+            onAddGroup={handleAddGroup}
+            onExportPNG={handleExportPNG}
+            onImportJSON={handleImportJSON}
+            onLoadDrive={googleDrive.handleOpenDriveModal}
+            onSaveJSON={handleExportJSON}
+            onSaveDrive={googleDrive.handleSaveToDrive}
             session={session ?? null}
             onSignIn={async () => {
               await signIn('google');
@@ -1000,38 +1018,40 @@ function QuadroCapiApp() {
         </div>
 
         {/* ---------- BOARD AREA ---------- */}
-        <main className="flex-1 flex flex-col min-w-0 relative">
-          <BoardToolbar
-            currentColor={currentColor}
-            currentTool={currentTool}
-            currentSize={currentSize}
-            onToggleTool={() =>
-              setCurrentTool(currentTool === 'eraser' ? 'pencil' : 'eraser')
-            }
-            onClearBoard={async () => {
-              const confirmed = await showConfirm('Cancellare tutto?');
-              if (confirmed) {
-                ctxRef.current?.clearRect(
-                  0,
-                  0,
-                  canvasRef.current!.width,
-                  canvasRef.current!.height
-                );
-                const currentCanvas = saveCurrentCanvasData();
-                updateBoard(activeBoardId, { canvasData: currentCanvas });
+        <main className="mobile-main flex-1 flex flex-col min-w-0 relative">
+          <div className="mobile-toolbar">
+            <BoardToolbar
+              currentColor={currentColor}
+              currentTool={currentTool}
+              currentSize={currentSize}
+              onToggleTool={() =>
+                setCurrentTool(currentTool === 'eraser' ? 'pencil' : 'eraser')
               }
-            }}
-            onAddGroup={handleAddGroup}
-            onColorSelect={(color) => {
-              if (currentColor === color && currentTool === 'pencil') {
-                setCurrentColor(null);
-              } else {
-                setCurrentColor(color);
-                setCurrentTool('pencil');
-              }
-            }}
-            onSizeChange={(value) => setCurrentSize(value)}
-          />
+              onClearBoard={async () => {
+                const confirmed = await showConfirm('Cancellare tutto?');
+                if (confirmed) {
+                  ctxRef.current?.clearRect(
+                    0,
+                    0,
+                    canvasRef.current!.width,
+                    canvasRef.current!.height
+                  );
+                  const currentCanvas = saveCurrentCanvasData();
+                  updateBoard(activeBoardId, { canvasData: currentCanvas });
+                }
+              }}
+              onAddGroup={handleAddGroup}
+              onColorSelect={(color) => {
+                if (currentColor === color && currentTool === 'pencil') {
+                  setCurrentColor(null);
+                } else {
+                  setCurrentColor(color);
+                  setCurrentTool('pencil');
+                }
+              }}
+              onSizeChange={(value) => setCurrentSize(value)}
+            />
+          </div>
 
           {/* NUOVO CONTENITORE SCORREVOLE */}
           <div className="flex-1 overflow-auto relative touch-pan-x touch-pan-y bg-[var(--board-bg)]">

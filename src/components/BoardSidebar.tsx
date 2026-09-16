@@ -1,4 +1,10 @@
-import type { Dispatch, FormEvent, ReactNode, SetStateAction } from 'react';
+import type {
+  ChangeEvent,
+  Dispatch,
+  FormEvent,
+  ReactNode,
+  SetStateAction,
+} from 'react';
 import type { Session } from 'next-auth';
 
 import { SYMBOLS } from '../lib/constants';
@@ -14,6 +20,12 @@ type BoardSidebarProps = {
   setShowCreationSymbols: Dispatch<SetStateAction<boolean>>;
   renderCard: (card: Card, inGroup?: boolean) => ReactNode;
   onAddCard: (e: FormEvent) => void;
+  onAddGroup: () => void;
+  onExportPNG: () => void | Promise<void>;
+  onImportJSON: (e: ChangeEvent<HTMLInputElement>) => void;
+  onLoadDrive: () => void | Promise<void>;
+  onSaveJSON: () => void;
+  onSaveDrive: () => void | Promise<void>;
   session: Session | null;
   onSignIn: () => void | Promise<void>;
   onSignOut: () => void | Promise<void>;
@@ -29,6 +41,12 @@ export function BoardSidebar({
   setShowCreationSymbols,
   renderCard,
   onAddCard,
+  onAddGroup,
+  onExportPNG,
+  onImportJSON,
+  onLoadDrive,
+  onSaveJSON,
+  onSaveDrive,
   session,
   onSignIn,
   onSignOut,
@@ -91,6 +109,32 @@ export function BoardSidebar({
           })}
         </div>
       )}
+      <div className="mobile-sidebar-actions" aria-label="Azioni lavagna">
+        <button type="button" onClick={onAddGroup}>
+          ➕ Nuova Staff
+        </button>
+        <button type="button" onClick={onExportPNG}>
+          📸 Esporta PNG
+        </button>
+        <label>
+          📂 Carica da PC
+          <input
+            type="file"
+            accept=".json"
+            onChange={onImportJSON}
+            className="hidden"
+          />
+        </label>
+        <button type="button" onClick={onLoadDrive} disabled={!session}>
+          ☁️ Carica da Drive
+        </button>
+        <button type="button" onClick={onSaveJSON}>
+          💾 Salva in locale
+        </button>
+        <button type="button" onClick={onSaveDrive} disabled={!session}>
+          💾 Salva su Drive
+        </button>
+      </div>
       <div className="pool-label text-[12.5px] m-[0_4px_8px] font-medium">
         In che staff li mettiamo?
       </div>
