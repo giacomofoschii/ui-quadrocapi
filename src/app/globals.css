@@ -365,7 +365,7 @@ button[class*='border-[#2E6E9E]'] {
   }
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 1024px), (pointer: coarse) and (max-width: 1366px) {
   html {
     touch-action: auto;
   }
@@ -439,14 +439,18 @@ button[class*='border-[#2E6E9E]'] {
   }
 
   .mobile-main {
-    height: 100%;
+    height: auto;
+    flex: 1 1 0%;
     min-width: 0;
     min-height: 0;
+    overflow: hidden;
     padding-top: 0;
   }
 
   .mobile-canvas-scroll {
     position: relative;
+    display: block;
+    flex: 1 1 0%;
     width: 100%;
     min-width: 0;
     min-height: 0;
