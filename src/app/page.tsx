@@ -121,6 +121,7 @@ function QuadroCapiApp() {
   );
 
   // --- STATI UI LOCALI ---
+  const [isSidebarMobileOpen, setIsSidebarMobileOpen] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const [newCardSymbols, setNewCardSymbols] = useState<string[]>([]);
   const [showCreationSymbols, setShowCreationSymbols] = useState(false);
@@ -797,7 +798,7 @@ function QuadroCapiApp() {
     >
       <LiveCursors />
       {/* ---------- BANNER CON LOGO E MARQUEE IN GRASSETTO ---------- */}
-      <div className="w-full overflow-hidden bg-gradient-to-r from-[var(--wood-dark)] via-[var(--wood)] to-[var(--wood-dark)] border-b-[2px] border-black/35 shadow-[0_2px_8px_rgba(0,0,0,0.3)] shrink-0 z-20 flex items-center h-[52px] relative">
+      <div className="hidden md:flex w-full overflow-hidden bg-gradient-to-r from-[var(--wood-dark)] via-[var(--wood)] to-[var(--wood-dark)] border-b-[2px] border-black/35 shadow-[0_2px_8px_rgba(0,0,0,0.3)] shrink-0 z-20 flex items-center h-[52px] relative">
         <div className="absolute inset-0 flex items-center overflow-hidden pointer-events-none">
           <div className="banner-track h-full items-center">
             <span className="inline-block whitespace-nowrap px-[50px] font-['Space_Grotesk'] font-bold text-[22px] tracking-[0.5px] text-[#FFF3DC] drop-shadow-[0_2px_3px_rgba(0,0,0,0.35)]">
@@ -849,7 +850,7 @@ function QuadroCapiApp() {
       </div>
       {/* ---------- TOP RIGHT CONTROLS ---------- */}
       <div
-        className="absolute top-[8px] right-[16px] z-[100] flex gap-[10px]"
+        className="mobile-action-bar absolute top-[8px] left-[112px] right-[8px] z-[100] flex gap-[10px] overflow-x-auto pb-1 md:left-auto md:right-[16px]"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="relative">
@@ -952,27 +953,52 @@ function QuadroCapiApp() {
           📸 Esporta PNG
         </button>
       </div>
-      <div className="flex flex-1 min-h-0">
-        <BoardSidebar
-          cards={cards}
-          inputValue={inputValue}
-          setInputValue={setInputValue}
-          newCardSymbols={newCardSymbols}
-          setNewCardSymbols={setNewCardSymbols}
-          showCreationSymbols={showCreationSymbols}
-          setShowCreationSymbols={setShowCreationSymbols}
-          renderCard={renderCard}
-          onAddCard={handleAddCard}
-          session={session ?? null}
-          onSignIn={async () => {
-            await signIn('google');
-          }}
-          onSignOut={async () => {
-            if (await showConfirm('Sei sicuro di voler fare il logout?')) {
-              await signOut();
-            }
-          }}
-        />
+      {/* Bottone Menu Mobile in alto a sinistra (visibile solo su schermi piccoli) */}
+      <button
+        className={`md:hidden absolute top-[8px] left-[16px] z-[200] ${ACTION_BTN_CLASS}`}
+        onClick={() => setIsSidebarMobileOpen(!isSidebarMobileOpen)}
+      >
+        {isSidebarMobileOpen ? '❌ Chiudi' : '☰ Capi'}
+      </button>
+
+      <div className="flex flex-1 min-h-0 relative">
+        {/* Overlay scuro: cliccandolo si chiude la sidebar */}
+        {isSidebarMobileOpen && (
+          <div
+            className="absolute inset-0 bg-black/60 z-[140] md:hidden backdrop-blur-sm"
+            onClick={() => setIsSidebarMobileOpen(false)}
+          />
+        )}
+
+        {/* Sidebar wrapper con logica a scorrimento (Off-canvas) */}
+        <div
+          className={`
+            absolute md:relative z-[150] h-full transition-transform duration-300 ease-in-out
+            ${isSidebarMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+          `}
+        >
+          <BoardSidebar
+            cards={cards}
+            inputValue={inputValue}
+            setInputValue={setInputValue}
+            newCardSymbols={newCardSymbols}
+            setNewCardSymbols={setNewCardSymbols}
+            showCreationSymbols={showCreationSymbols}
+            setShowCreationSymbols={setShowCreationSymbols}
+            renderCard={renderCard}
+            onAddCard={handleAddCard}
+            session={session ?? null}
+            onSignIn={async () => {
+              await signIn('google');
+            }}
+            onSignOut={async () => {
+              if (await showConfirm('Sei sicuro di voler fare il logout?')) {
+                await signOut();
+              }
+            }}
+          />
+        </div>
+
         {/* ---------- BOARD AREA ---------- */}
         <main className="flex-1 flex flex-col min-w-0 relative">
           <BoardToolbar
@@ -1006,28 +1032,36 @@ function QuadroCapiApp() {
             }}
             onSizeChange={(value) => setCurrentSize(value)}
           />
-          <BoardCanvas
-            boardRef={boardRef}
-            canvasRef={canvasRef}
-            currentTool={currentTool}
-            currentColor={currentColor}
-            currentSize={currentSize}
-            cursorPos={cursorPos}
-            onPointerDown={startDrawing}
-            onPointerMove={draw}
-            onPointerUp={stopDrawing}
-            onPointerCancel={stopDrawing}
-            onPointerLeave={() => setCursorPos(null)}
-            groups={groups}
-            cards={cards}
-            editingGroupColor={editingGroupColor}
-            setEditingGroupColor={setEditingGroupColor}
-            setGroups={setGroups}
-            setCards={setCards}
-            showConfirm={showConfirm}
-            renderCard={renderCard}
-            dragStateRef={dragState}
-          />
+
+          {/* NUOVO CONTENITORE SCORREVOLE */}
+          <div className="flex-1 overflow-auto relative touch-pan-x touch-pan-y bg-[var(--board-bg)]">
+            {/* TAVOLO GIGANTE: 2000x1500px, per poter scorrere in tutte le direzioni su mobile */}
+            <div className="w-[2000px] h-[1500px] relative">
+              <BoardCanvas
+                boardRef={boardRef}
+                canvasRef={canvasRef}
+                currentTool={currentTool}
+                currentColor={currentColor}
+                currentSize={currentSize}
+                cursorPos={cursorPos}
+                onPointerDown={startDrawing}
+                onPointerMove={draw}
+                onPointerUp={stopDrawing}
+                onPointerCancel={stopDrawing}
+                onPointerLeave={() => setCursorPos(null)}
+                groups={groups}
+                cards={cards}
+                editingGroupColor={editingGroupColor}
+                setEditingGroupColor={setEditingGroupColor}
+                setGroups={setGroups}
+                setCards={setCards}
+                showConfirm={showConfirm}
+                renderCard={renderCard}
+                dragStateRef={dragState}
+              />
+            </div>
+          </div>
+
           <BoardTabs
             boards={boards}
             activeBoardId={activeBoardId}
