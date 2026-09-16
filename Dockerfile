@@ -1,16 +1,38 @@
-FROM node:22-alpine
+FROM node:22-alpine AS base
 
 WORKDIR /app
 
-# Installiamo le dipendenze base
 COPY package.json package-lock.json* ./
+
+FROM base AS development
+
 RUN npm ci
 
-# Copiamo il resto del codice
 COPY . .
 
-# Esponiamo la porta di default di Next.js
 EXPOSE 3000
 
-# Comando di avvio in dev mode
 CMD ["npm", "run", "dev"]
+
+FROM base AS dependencies
+
+RUN npm ci
+
+FROM dependencies AS builder
+
+COPY . .
+RUN npm run build
+
+FROM node:22-alpine AS runner
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+
+EXPOSE 3000
+
+CMD ["node", "server.js"]
