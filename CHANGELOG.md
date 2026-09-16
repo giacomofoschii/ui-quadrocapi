@@ -1,3 +1,9 @@
+# [1.20.0](https://github.com/giacomofoschii/ui-quadrocapi/compare/v1.19.0...v1.20.0) (2026-09-16)
+
+### Features
+
+- enhance mobile canvas layout for improved responsiveness ([73bc966](https://github.com/giacomofoschii/ui-quadrocapi/commit/73bc9667d2e44f7d19cdc901760c2693af6c2aa4))
+
 # [1.19.0](https://github.com/giacomofoschii/ui-quadrocapi/compare/v1.18.0...v1.19.0) (2026-09-16)
 
 ### Features
