@@ -1,3 +1,10 @@
+# [1.10.0](https://github.com/giacomofoschii/ui-quadrocapi/compare/v1.9.0...v1.10.0) (2026-09-16)
+
+### Features
+
+- add mobile adaptations for improved responsiveness and usability ([b6caa21](https://github.com/giacomofoschii/ui-quadrocapi/commit/b6caa214cb53bd866e3f5b5066e89dd73de6485b))
+- add viewport configuration for responsive layout ([f2cb669](https://github.com/giacomofoschii/ui-quadrocapi/commit/f2cb669740bd57396c9e5db570c2d87a5e429af2))
+
 # [1.9.0](https://github.com/giacomofoschii/ui-quadrocapi/compare/v1.8.0...v1.9.0) (2026-09-16)
 
 ### Features
