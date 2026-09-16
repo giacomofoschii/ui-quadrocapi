@@ -484,3 +484,8 @@ button[class*='border-[#2E6E9E]'] {
     font-size: 18px !important;
   }
 }
+
+#liveblocks-devtools-root,
+[data-liveblocks-devtools] {
+  display: none !important;
+}
