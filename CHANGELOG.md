@@ -1,3 +1,9 @@
+# [1.18.0](https://github.com/giacomofoschii/ui-quadrocapi/compare/v1.17.0...v1.18.0) (2026-09-16)
+
+### Features
+
+- enhance mobile canvas styles for better scrolling experience ([47bce7c](https://github.com/giacomofoschii/ui-quadrocapi/commit/47bce7c5c1d0434f348653a4ad9bb534b611f9a2))
+
 # [1.17.0](https://github.com/giacomofoschii/ui-quadrocapi/compare/v1.16.0...v1.17.0) (2026-09-16)
 
 ### Features
