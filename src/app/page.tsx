@@ -337,6 +337,30 @@ function QuadroCapiApp() {
     };
   }, [groups, setCards, setGroups]);
 
+  useEffect(() => {
+    if (!editingCardId) return;
+    const cardElement = document.querySelector<HTMLElement>(
+      `[data-card-id="${editingCardId}"]`
+    );
+    if (!cardElement) return;
+
+    const updatePopupPosition = () => {
+      const rect = cardElement.getBoundingClientRect();
+      const left = rect.left + rect.width / 2;
+      const top = rect.bottom + 6;
+
+      setEditingCardPos((previous) => {
+        if (previous?.left === left && previous.top === top) return previous;
+        return { left, top };
+      });
+    };
+
+    const observer = new ResizeObserver(updatePopupPosition);
+    observer.observe(cardElement);
+
+    return () => observer.disconnect();
+  }, [cards, editingCardId]);
+
   // =========================================================================
   // GESTIONE FOGLI E MENU CONTEXT
   // =========================================================================
@@ -780,10 +804,12 @@ function QuadroCapiApp() {
           if (editingCardId === cardToEdit.id) {
             setEditingCardId(null);
           } else {
-            const rect = event.currentTarget.getBoundingClientRect();
-            let left = rect.left - 100;
-            if (left < 16) left = 16;
-            if (left + 240 > window.innerWidth) left = window.innerWidth - 240;
+            const cardElement =
+              event.currentTarget.closest<HTMLElement>('[data-card-id]');
+            const rect =
+              cardElement?.getBoundingClientRect() ??
+              event.currentTarget.getBoundingClientRect();
+            const left = rect.left + rect.width / 2;
             setEditingCardPos({ left, top: rect.bottom + 6 });
             setEditingCardId(cardToEdit.id);
           }
@@ -794,7 +820,7 @@ function QuadroCapiApp() {
 
   return (
     <div
-      className="relative flex flex-col h-screen overflow-hidden font-['Work_Sans'] bg-[var(--wood-dark)] select-none"
+      className="mobile-app-root relative flex flex-col h-screen overflow-hidden font-['Work_Sans'] bg-[var(--wood-dark)] select-none"
       onPointerMove={(e) =>
         updateMyPresence({
           cursor: { x: Math.round(e.clientX), y: Math.round(e.clientY) },
@@ -1093,7 +1119,11 @@ function QuadroCapiApp() {
           return (
             <div
               className="fixed p-2 bg-transparent rounded-[8px] shadow-none border-none z-[10000] flex gap-2 cursor-default pointer-events-auto"
-              style={{ left: editingCardPos.left, top: editingCardPos.top }}
+              style={{
+                left: editingCardPos.left,
+                top: editingCardPos.top,
+                transform: 'translateX(-50%)',
+              }}
               onPointerDown={(e) => e.stopPropagation()}
             >
               {SYMBOLS.map((sym) => {

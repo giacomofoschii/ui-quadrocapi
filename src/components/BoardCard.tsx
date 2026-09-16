@@ -28,6 +28,7 @@ export function BoardCard({
 }: BoardCardProps) {
   return (
     <div
+      data-card-id={card.id}
       onPointerDown={(event) => onPointerDown(event, card, event.currentTarget)}
       className={`tag ${inGroup ? 'in-group' : ''} ${card.symbols.length > 0 ? 'has-symbols' : ''}`}
       style={{
