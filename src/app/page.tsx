@@ -6,14 +6,16 @@ import Image from 'next/image';
 import html2canvas from 'html2canvas';
 
 import { BoardCard } from '@/components/BoardCard';
+import { BoardCanvas } from '@/components/BoardCanvas';
 import { BoardSidebar } from '@/components/BoardSidebar';
-import { BoardGroups } from '@/components/BoardGroups';
 import { BoardTabs } from '@/components/BoardTabs';
 import { BoardToolbar } from '@/components/BoardToolbar';
+import { GoogleDriveModal } from '@/components/GoogleDriveModal';
 import { GROUP_COLORS, SYMBOLS } from '@/lib/constants';
 import { createId } from '@/lib/ids';
 import type { Board, Card, Group } from '@/lib/types';
 import { useBoardPersistence } from '@/lib/useBoardPersistence';
+import { useGoogleDrive } from '@/lib/useGoogleDrive';
 
 const ACTION_BTN_CLASS =
   "action-btn flex items-center gap-[6px] px-[12px] py-[6px] rounded-[6px] border border-[rgba(255,255,255,0.4)] bg-[rgba(0,0,0,0.4)] font-['Work_Sans'] font-bold text-[13px] cursor-pointer backdrop-blur-[4px] hover:bg-[rgba(0,0,0,0.7)] hover:border-[rgba(255,255,255,0.8)] transition-all duration-200 text-white";
@@ -33,12 +35,6 @@ const INITIAL_BOARDS: Board[] = [
     canvasData: null,
   },
 ];
-
-type DriveFile = {
-  id: string;
-  name: string;
-  createdTime?: string;
-};
 
 export default function QuadroCapiApp() {
   // --- STATO DELLE LAVAGNE & AUTOSAVE ---
@@ -119,17 +115,6 @@ export default function QuadroCapiApp() {
     onCancel?: () => void;
   }>({ show: false, message: '', onConfirm: () => {} });
   const [modalInput, setModalInput] = useState('');
-
-  // Stato per la modale di Google Drive (Load)
-  const [driveModal, setDriveModal] = useState<{
-    show: boolean;
-    files: DriveFile[];
-    loading: boolean;
-  }>({
-    show: false,
-    files: [],
-    loading: false,
-  });
 
   const [currentColor, setCurrentColor] = useState<string | null>(null);
   const [currentSize, setCurrentSize] = useState(4);
@@ -458,149 +443,6 @@ export default function QuadroCapiApp() {
   };
 
   // =========================================================================
-  // LOGICA GOOGLE DRIVE API
-  // =========================================================================
-  const handleSaveToDrive = async () => {
-    if (!session) return;
-    const token = session.accessToken;
-    if (!token) {
-      await showAlert('Errore di autenticazione. Riprova il login.');
-      return;
-    }
-
-    setOpenMenu(null);
-    const safeName = activeBoard.name.replace(/\s+/g, '-').toLowerCase();
-    const fileName = await showPrompt(
-      'Salva su Google Drive come:',
-      `${safeName}-salvataggio.json`
-    );
-
-    if (!fileName || !fileName.trim()) return;
-
-    try {
-      const currentCanvas = saveCurrentCanvasData();
-      const dataToSave = {
-        state: { cards, groups },
-        canvas: currentCanvas,
-      };
-
-      const finalName = fileName.endsWith('.json')
-        ? fileName
-        : `${fileName}.json`;
-      const metadata = {
-        name: finalName,
-        mimeType: 'application/json',
-      };
-
-      const form = new FormData();
-      form.append(
-        'metadata',
-        new Blob([JSON.stringify(metadata)], { type: 'application/json' })
-      );
-      form.append(
-        'file',
-        new Blob([JSON.stringify(dataToSave)], { type: 'application/json' })
-      );
-
-      const res = await fetch(
-        'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          body: form,
-        }
-      );
-
-      if (res.ok) {
-        await showAlert(
-          `Il file "${finalName}" è stato salvato con successo nel tuo Google Drive!`
-        );
-      } else {
-        throw new Error('Upload fallito');
-      }
-    } catch {
-      await showAlert('Errore durante il salvataggio su Drive.');
-    }
-  };
-
-  const handleOpenDriveModal = async () => {
-    if (!session) return;
-    const token = session.accessToken;
-    if (!token) {
-      await showAlert('Errore di autenticazione. Riprova il login.');
-      return;
-    }
-
-    setOpenMenu(null);
-    setDriveModal({ show: true, files: [], loading: true });
-
-    try {
-      // Cerca solo i file JSON creati dall'app (che non sono nel cestino)
-      const query = encodeURIComponent(
-        `trashed=false and mimeType="application/json"`
-      );
-      const res = await fetch(
-        `https://www.googleapis.com/drive/v3/files?q=${query}&fields=files(id,name,createdTime)`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      const data = await res.json();
-      setDriveModal({ show: true, files: data.files || [], loading: false });
-    } catch {
-      setDriveModal({ show: false, files: [], loading: false });
-      await showAlert('Errore nel recupero dei file da Google Drive.');
-    }
-  };
-
-  const handleLoadDriveFile = async (fileId: string, fileName: string) => {
-    const token = session?.accessToken;
-    if (!token) {
-      await showAlert('Errore di autenticazione. Riprova il login.');
-      return;
-    }
-    setDriveModal({ show: false, files: [], loading: false });
-
-    try {
-      const res = await fetch(
-        `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      const data = await res.json();
-
-      if (data.state) {
-        const newId = createId('b');
-        const currentCanvas = saveCurrentCanvasData();
-
-        setBoards((prev) => {
-          const saved = prev.map((b) =>
-            b.id === activeBoardId ? { ...b, canvasData: currentCanvas } : b
-          );
-          return [
-            ...saved,
-            {
-              id: newId,
-              name: fileName.replace('.json', '') || 'Lavagna Importata',
-              cards: data.state.cards || [],
-              groups: data.state.groups || [],
-              canvasData: data.canvas || null,
-            },
-          ];
-        });
-        setActiveBoardId(newId);
-      } else {
-        await showAlert('Formato del file non supportato o corrotto.');
-      }
-    } catch {
-      await showAlert('Errore durante il caricamento del file da Drive.');
-    }
-  };
-
-  // =========================================================================
   // LOGICA DISEGNO E ALTRI HANDLER
   // =========================================================================
   const getPos = (e: React.PointerEvent) => {
@@ -724,6 +566,48 @@ export default function QuadroCapiApp() {
       });
     });
   };
+
+  const googleDrive = useGoogleDrive({
+    session: session ?? null,
+    boardName: activeBoard.name,
+    getExportData: () => ({
+      state: { cards, groups },
+      canvas: saveCurrentCanvasData(),
+    }),
+    showAlert,
+    showPrompt,
+    onFileLoaded: (fileName, rawData) => {
+      const data = rawData as {
+        state?: { cards?: Card[]; groups?: Group[] };
+        canvas?: string | null;
+      };
+      if (!data.state) {
+        void showAlert('Formato del file non supportato o corrotto.');
+        return;
+      }
+
+      const newId = createId('b');
+      const currentCanvas = saveCurrentCanvasData();
+      setBoards((prev) => {
+        const saved = prev.map((board) =>
+          board.id === activeBoardId
+            ? { ...board, canvasData: currentCanvas }
+            : board
+        );
+        return [
+          ...saved,
+          {
+            id: newId,
+            name: fileName.replace('.json', '') || 'Lavagna Importata',
+            cards: data.state?.cards ?? [],
+            groups: data.state?.groups ?? [],
+            canvasData: data.canvas ?? null,
+          },
+        ];
+      });
+      setActiveBoardId(newId);
+    },
+  });
 
   const handleAddCard = (e: React.FormEvent) => {
     e.preventDefault();
@@ -986,7 +870,7 @@ export default function QuadroCapiApp() {
                 />
               </label>
               <button
-                onClick={handleOpenDriveModal}
+                onClick={googleDrive.handleOpenDriveModal}
                 disabled={!session}
                 className={`${MENU_ITEM_CLASS} ${!session ? 'opacity-40 cursor-not-allowed hover:bg-transparent' : ''}`}
               >
@@ -1024,7 +908,7 @@ export default function QuadroCapiApp() {
                 <span>In locale (JSON)</span>
               </button>
               <button
-                onClick={handleSaveToDrive}
+                onClick={googleDrive.handleSaveToDrive}
                 disabled={!session}
                 className={`${MENU_ITEM_CLASS} ${!session ? 'opacity-40 cursor-not-allowed hover:bg-transparent' : ''}`}
               >
@@ -1119,58 +1003,28 @@ export default function QuadroCapiApp() {
             }}
             onSizeChange={(value) => setCurrentSize(value)}
           />
-          <div
-            ref={boardRef}
-            className="relative flex-1 overflow-hidden"
-            style={{
-              background:
-                'radial-gradient(circle, rgba(0,0,0,0.045) 1px, transparent 1.2px) 0 0/26px 26px, var(--board-bg)',
-            }}
-          >
-            <canvas
-              ref={canvasRef}
-              className="absolute inset-0 touch-none z-0"
-              style={{
-                cursor:
-                  currentTool === 'eraser'
-                    ? 'none'
-                    : currentTool === 'pencil' && currentColor
-                      ? 'crosshair'
-                      : 'default',
-              }}
-              onPointerDown={startDrawing}
-              onPointerMove={draw}
-              onPointerUp={stopDrawing}
-              onPointerCancel={stopDrawing}
-              onPointerLeave={() => setCursorPos(null)}
-            />
-            {currentTool === 'eraser' && cursorPos && (
-              <div
-                className="absolute z-[1] pointer-events-none"
-                style={{
-                  left: cursorPos.x,
-                  top: cursorPos.y,
-                  width: currentSize * 3,
-                  height: currentSize * 3,
-                  transform: 'translate(-50%, -50%)',
-                  border: '2px solid #3a2f1a',
-                  borderRadius: '50%',
-                  background: 'rgba(255,255,255,0.2)',
-                }}
-              />
-            )}
-            <BoardGroups
-              groups={groups}
-              cards={cards}
-              editingGroupColor={editingGroupColor}
-              setEditingGroupColor={setEditingGroupColor}
-              setGroups={setGroups}
-              setCards={setCards}
-              showConfirm={showConfirm}
-              renderCard={renderCard}
-              dragStateRef={dragState}
-            />
-          </div>
+          <BoardCanvas
+            boardRef={boardRef}
+            canvasRef={canvasRef}
+            currentTool={currentTool}
+            currentColor={currentColor}
+            currentSize={currentSize}
+            cursorPos={cursorPos}
+            onPointerDown={startDrawing}
+            onPointerMove={draw}
+            onPointerUp={stopDrawing}
+            onPointerCancel={stopDrawing}
+            onPointerLeave={() => setCursorPos(null)}
+            groups={groups}
+            cards={cards}
+            editingGroupColor={editingGroupColor}
+            setEditingGroupColor={setEditingGroupColor}
+            setGroups={setGroups}
+            setCards={setCards}
+            showConfirm={showConfirm}
+            renderCard={renderCard}
+            dragStateRef={dragState}
+          />
           <BoardTabs
             boards={boards}
             activeBoardId={activeBoardId}
@@ -1225,90 +1079,13 @@ export default function QuadroCapiApp() {
           );
         })()}
 
-      {/* ---------- MODAL GOOGLE DRIVE (LISTA FILE) ---------- */}
-      {driveModal.show && (
-        <div
-          className="fixed top-0 left-0 w-screen h-screen z-[10000] custom-modal-overlay"
-          style={{
-            background: 'rgba(0,0,0,0.6)',
-            backdropFilter: 'blur(4px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-          onClick={() =>
-            setDriveModal({ show: false, files: [], loading: false })
-          }
-        >
-          <div
-            className="relative rounded-[12px] shadow-2xl custom-modal-content flex flex-col"
-            style={{
-              background: 'var(--tag-bg)',
-              border: '2px solid var(--tag-border)',
-              boxShadow: '0 12px 48px rgba(40,28,14,0.5)',
-              width: '90%',
-              maxWidth: '480px',
-              maxHeight: '80vh',
-              padding: '24px',
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex justify-between items-center mb-[20px] border-b border-[rgba(0,0,0,0.1)] pb-[12px]">
-              <h2 className="text-[18px] font-bold text-[#3a2f1a] font-['Space_Grotesk'] m-0 flex items-center gap-2">
-                <Image
-                  src="/drive-logo.png"
-                  alt="Drive"
-                  width={20}
-                  height={20}
-                  className="object-contain"
-                  onError={(e) => (e.currentTarget.style.display = 'none')}
-                />
-                Il tuo Google Drive
-              </h2>
-              <button
-                onClick={() =>
-                  setDriveModal({ show: false, files: [], loading: false })
-                }
-                className="text-[20px] font-bold text-[#8a7a4a] hover:text-[#b23b2e] cursor-pointer bg-transparent border-none"
-              >
-                ×
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto min-h-[150px]">
-              {driveModal.loading ? (
-                <div className="flex items-center justify-center h-full text-[#8a7a5a] font-semibold text-[14px]">
-                  Caricamento in corso...
-                </div>
-              ) : driveModal.files.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full text-[#8a7a5a] text-[14px] text-center p-4">
-                  <span className="text-[24px] mb-2">📂</span>
-                  Non hai ancora salvato nessuna lavagna sul tuo Drive.
-                </div>
-              ) : (
-                <div className="flex flex-col gap-2 pr-2">
-                  {driveModal.files.map((f) => (
-                    <button
-                      key={f.id}
-                      onClick={() => handleLoadDriveFile(f.id, f.name)}
-                      className="flex flex-col items-start px-[16px] py-[12px] rounded-[8px] border border-[rgba(0,0,0,0.15)] bg-[rgba(255,255,255,0.6)] hover:bg-[rgba(255,255,255,0.9)] hover:border-[rgba(0,0,0,0.3)] hover:shadow-sm transition-all duration-200 cursor-pointer w-full text-left"
-                    >
-                      <span className="font-['Work_Sans'] font-bold text-[14px] text-[#3a2f1a]">
-                        {f.name}
-                      </span>
-                      <span className="font-['Work_Sans'] text-[11px] text-[#8a7a5a] mt-1">
-                        Salvato il:{' '}
-                        {f.createdTime
-                          ? new Date(f.createdTime).toLocaleString('it-IT')
-                          : 'Data non disponibile'}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+      {googleDrive.driveModal.show && (
+        <GoogleDriveModal
+          files={googleDrive.driveModal.files}
+          loading={googleDrive.driveModal.loading}
+          onClose={googleDrive.closeDriveModal}
+          onLoadFile={googleDrive.handleLoadDriveFile}
+        />
       )}
 
       {/* ---------- MODAL CONFERME E PROMPT ---------- */}
