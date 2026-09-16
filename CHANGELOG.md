@@ -1,3 +1,10 @@
+# [1.17.0](https://github.com/giacomofoschii/ui-quadrocapi/compare/v1.16.0...v1.17.0) (2026-09-16)
+
+### Features
+
+- add Docker section to README with deployment and local development instructions ([c68c24c](https://github.com/giacomofoschii/ui-quadrocapi/commit/c68c24c89dcf71d0f4681583e6793229ab9a9ab0))
+- add Docker workflow and update Dockerfile for multi-stage builds ([7efc5ad](https://github.com/giacomofoschii/ui-quadrocapi/commit/7efc5ad0726622ba4b653b40b02b112331771763))
+
 # [1.16.0](https://github.com/giacomofoschii/ui-quadrocapi/compare/v1.15.0...v1.16.0) (2026-09-16)
 
 ### Features
