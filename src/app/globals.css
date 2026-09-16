@@ -442,6 +442,10 @@ button[class*='border-[#2E6E9E]'] {
     touch-action: pan-x pan-y;
   }
 
+  .mobile-canvas-surface canvas {
+    pointer-events: none;
+  }
+
   .mobile-board-tabs {
     position: fixed;
     right: 0;
