@@ -967,7 +967,7 @@ function QuadroCapiApp() {
       </div>
       {/* Bottone Menu Mobile in alto a sinistra (visibile solo su schermi piccoli) */}
       <button
-        className={`md:hidden absolute top-[8px] left-[16px] z-[200] ${ACTION_BTN_CLASS}`}
+        className={`mobile-menu-toggle absolute top-[8px] left-[16px] z-[200] ${ACTION_BTN_CLASS}`}
         onClick={() => setIsSidebarMobileOpen(!isSidebarMobileOpen)}
       >
         {isSidebarMobileOpen ? '❌ Chiudi' : '☰ Capi'}
@@ -977,17 +977,14 @@ function QuadroCapiApp() {
         {/* Overlay scuro: cliccandolo si chiude la sidebar */}
         {isSidebarMobileOpen && (
           <div
-            className="absolute inset-0 bg-black/60 z-[140] md:hidden backdrop-blur-sm"
+            className="mobile-sidebar-overlay absolute inset-0 bg-black/60 z-[140] backdrop-blur-sm"
             onClick={() => setIsSidebarMobileOpen(false)}
           />
         )}
 
         {/* Sidebar wrapper con logica a scorrimento (Off-canvas) */}
         <div
-          className={`
-            absolute md:relative z-[150] h-full transition-transform duration-300 ease-in-out
-            ${isSidebarMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
-          `}
+          className={`mobile-sidebar-shell z-[150] h-full transition-transform duration-300 ease-in-out ${isSidebarMobileOpen ? 'mobile-sidebar-open' : ''}`}
         >
           <BoardSidebar
             cards={cards}
