@@ -2,10 +2,6 @@ import { Liveblocks } from '@liveblocks/node';
 import { getToken } from 'next-auth/jwt';
 import { NextRequest, NextResponse } from 'next/server';
 
-const liveblocks = new Liveblocks({
-  secret: process.env.LIVEBLOCKS_SECRET_KEY as string,
-});
-
 const ANIMALI_SCOUT = [
   'Lupo',
   'Falco',
@@ -18,14 +14,16 @@ const ANIMALI_SCOUT = [
 ];
 
 export async function POST(request: NextRequest) {
-  // 1. Cerchiamo il token di Google
+  const liveblocks = new Liveblocks({
+    secret: process.env.LIVEBLOCKS_SECRET_KEY as string,
+  });
+
   const token = await getToken({
     req: request,
     secret: process.env.NEXTAUTH_SECRET,
   });
   const { room } = await request.json();
 
-  // 2. Se l'utente NON è loggato, generiamo un nome scout casuale
   let email = token?.email;
   let name = token?.name;
   let avatar = token?.picture || '';
@@ -36,11 +34,9 @@ export async function POST(request: NextRequest) {
     const idCasuale = Math.floor(Math.random() * 1000);
     email = `anonimo_${idCasuale}@scout.it`;
     name = `${animale} Misterioso`;
-    // Mettiamo un'iconcina di default per gli anonimi
     avatar = `https://api.dicebear.com/7.x/bottts/svg?seed=${animale}`;
   }
 
-  // 3. Creiamo la sessione per Liveblocks
   const session = liveblocks.prepareSession(email, {
     userInfo: { name, avatar },
   });
