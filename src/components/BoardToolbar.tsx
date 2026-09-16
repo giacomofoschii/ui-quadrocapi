@@ -23,7 +23,7 @@ export function BoardToolbar({
 }: BoardToolbarProps) {
   return (
     <div className="flex items-center gap-[14px] p-[10px_16px] bg-gradient-to-b from-[#f3efe6] to-[#e9e2d2] border-b border-[#cfc4a8] shadow-[0_2px_6px_rgba(0,0,0,0.15)] z-[5] flex-wrap relative">
-      <div className="drawing-option flex gap-[6px] items-center">
+      <div className="flex gap-[6px] items-center">
         {COLORS.map((c) => (
           <button
             key={c}
@@ -33,8 +33,8 @@ export function BoardToolbar({
           />
         ))}
       </div>
-      <div className="drawing-option w-[1px] h-[26px] bg-[#c9bd9c]" />
-      <label className="drawing-option flex items-center gap-[6px] text-[13px] text-[#3a2f1a] font-semibold">
+      <div className="w-[1px] h-[26px] bg-[#c9bd9c]" />
+      <label className="flex items-center gap-[6px] text-[13px] text-[#3a2f1a] font-semibold">
         spessore{' '}
         <input
           type="range"
@@ -45,20 +45,20 @@ export function BoardToolbar({
           className="w-[100px] cursor-pointer"
         />
       </label>
-      <div className="drawing-option w-[1px] h-[26px] bg-[#c9bd9c]" />
+      <div className="w-[1px] h-[26px] bg-[#c9bd9c]" />
       <button
         onClick={onToggleTool}
-        className={`drawing-option px-[14px] py-[8px] rounded-[8px] border border-[#c9bd9c] font-['Work_Sans'] font-semibold text-[13.5px] cursor-pointer ${currentTool === 'eraser' ? 'bg-[#3a2f1a] text-[#fffdf7]' : 'bg-[#fffdf7] text-[#3a2f1a]'}`}
+        className={`px-[14px] py-[8px] rounded-[8px] border border-[#c9bd9c] font-['Work_Sans'] font-semibold text-[13.5px] cursor-pointer ${currentTool === 'eraser' ? 'bg-[#3a2f1a] text-[#fffdf7]' : 'bg-[#fffdf7] text-[#3a2f1a]'}`}
       >
         Gomma
       </button>
       <button
         onClick={onClearBoard}
-        className="drawing-option px-[14px] py-[8px] rounded-[8px] border border-[#c9bd9c] font-['Work_Sans'] font-semibold text-[13.5px] bg-[#fffdf7] text-[#3a2f1a] cursor-pointer hover:bg-[#f3ead5]"
+        className="px-[14px] py-[8px] rounded-[8px] border border-[#c9bd9c] font-['Work_Sans'] font-semibold text-[13.5px] bg-[#fffdf7] text-[#3a2f1a] cursor-pointer hover:bg-[#f3ead5]"
       >
         Pulisci lavagna
       </button>
-      <div className="drawing-option w-[1px] h-[26px] bg-[#c9bd9c]" />
+      <div className="w-[1px] h-[26px] bg-[#c9bd9c]" />
       <button
         onClick={onAddGroup}
         className="px-[14px] py-[8px] rounded-[8px] border border-[#2E6E9E] bg-[#2E6E9E] text-white font-['Work_Sans'] font-bold text-[13.5px] cursor-pointer active:translate-y-[1px]"
