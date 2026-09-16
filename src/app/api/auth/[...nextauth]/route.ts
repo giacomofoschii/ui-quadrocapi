@@ -1,37 +1,65 @@
-import NextAuth from 'next-auth';
-import GoogleProvider from 'next-auth/providers/google';
+import { Liveblocks } from '@liveblocks/node';
+import { getToken } from 'next-auth/jwt';
+import { NextRequest, NextResponse } from 'next/server';
 
-const handler = NextAuth({
-  providers: [
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID as string,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
-      authorization: {
-        params: {
-          // Richiediamo esplicitamente l'accesso in scrittura/lettura per i file creati dall'app
-          scope:
-            'openid email profile https://www.googleapis.com/auth/drive.file',
-          prompt: 'consent',
-          access_type: 'offline',
-          response_type: 'code',
-        },
-      },
-    }),
-  ],
-  callbacks: {
-    // Quando Google ci risponde, salviamo l'Access Token nel nostro JWT interno
-    async jwt({ token, account }) {
-      if (account) {
-        token.accessToken = account.access_token;
-      }
-      return token;
-    },
-    // Passiamo l'Access Token alla sessione client così possiamo usarlo da page.tsx
-    async session({ session, token }) {
-      session.accessToken = token.accessToken;
-      return session;
-    },
-  },
-});
+const ANIMALI_SCOUT = [
+  'Lupo',
+  'Falco',
+  'Cervo',
+  'Orso',
+  'Volpe',
+  'Aquila',
+  'Puma',
+  'Tigre',
+];
 
-export { handler as GET, handler as POST };
+export async function POST(request: NextRequest) {
+  try {
+    if (!process.env.LIVEBLOCKS_SECRET_KEY) {
+      console.error('ERRORE: Manca la LIVEBLOCKS_SECRET_KEY!');
+      return new NextResponse('Manca la chiave segreta', { status: 500 });
+    }
+
+    const liveblocks = new Liveblocks({
+      secret: process.env.LIVEBLOCKS_SECRET_KEY,
+    });
+
+    const token = await getToken({
+      req: request,
+      secret: process.env.NEXTAUTH_SECRET,
+    });
+
+    let room = 'lavagna-principale';
+    try {
+      const body = await request.json();
+      if (body?.room) room = body.room;
+    } catch (e) {
+      // Ignoriamo l'errore se non c'è un body JSON
+    }
+
+    let email = token?.email;
+    let name = token?.name;
+    let avatar = token?.picture || '';
+
+    if (!email || !name) {
+      const animale =
+        ANIMALI_SCOUT[Math.floor(Math.random() * ANIMALI_SCOUT.length)];
+      const idCasuale = Math.floor(Math.random() * 1000);
+      email = `anonimo_${idCasuale}@scout.it`;
+      name = `${animale} Misterioso`;
+      avatar = `https://api.dicebear.com/7.x/bottts/svg?seed=${animale}`;
+    }
+
+    const session = liveblocks.prepareSession(email, {
+      userInfo: { name, avatar },
+    });
+
+    session.allow(room, session.FULL_ACCESS);
+
+    const { status, body: sessionBody } = await session.authorize();
+    return new NextResponse(sessionBody, { status });
+  } catch (error) {
+    console.error('Errore critico in API Liveblocks:', error);
+    return new NextResponse('Errore interno del server', { status: 500 });
+  }
+}
