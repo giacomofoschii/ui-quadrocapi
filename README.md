@@ -16,11 +16,11 @@ La decisione del Quadro Capi per il nuovo anno scout è uno degli snodi centrali
 ## ✨ Funzionalità
 
 - 📡 **Collaborazione in Tempo Reale**: Lavora sulla stessa lavagna contemporaneamente agli altri capi (in stile Figma o Miro). I movimenti dei cartellini, i disegni a mano libera e i cursori del mouse sono sincronizzati all'istante per tutti gli utenti connessi.
-- 👤 **Accesso Google & Ospiti**: Accedi con il tuo account Google per mostrare il tuo nome e la tua foto, oppure entra senza registrazione: il sistema ti assegnerà automaticamente un simpatico nome in incognito (es. *Lupo Misterioso*, *Falco Anonimo*).
+- 👤 **Accesso Google & Ospiti**: Accedi con il tuo account Google per mostrare il tuo nome e la tua foto, oppure entra senza registrazione: il sistema ti assegnerà automaticamente un simpatico nome in incognito (es. _Lupo Misterioso_, _Falco Anonimo_).
 - 🖱️ **Composizione Staff Visuale**: Interfaccia **drag & drop** intuitiva per assegnare rapidamente i capi alle branche L/C, E/G e R/S.
 - 📛 **Anagrafica e Formazione**: Visualizzazione chiara dei capi della Co.Ca. con il rispettivo iter formativo (Tirocinio, CFM, CFA) evidenziato tramite **badge**.
 - 📑 **Lavagne Multiple**: Gestione di più "board" contemporaneamente (in stile fogli di calcolo Excel), perfette per elaborare e confrontare diverse opzioni di Quadro Capi (es. "Ipotesi A", "Ipotesi B").
-- 💾 **Salvataggio flessibile**: 
+- 💾 **Salvataggio flessibile**:
   - Sincronizzazione automatica e continua sul cloud durante l'utilizzo.
   - Integrazione con **Google Drive** (tramite Google Login) per salvare o caricare lo storico del lavoro direttamente sul tuo account.
   - Esportazione e importazione dati in formato JSON per salvataggi locali.
@@ -35,17 +35,55 @@ La decisione del Quadro Capi per il nuovo anno scout è uno degli snodi centrali
 - **Cloud Storage:** Google Drive API REST
 - **Hosting:** Vercel
 
+## 🐳 Docker
+
+Il progetto usa due percorsi distinti:
+
+- **Vercel** esegue il deploy direttamente dal codice sorgente quando viene fatto push su `main`.
+- **GitHub Actions** costruisce e pubblica l'immagine Docker di produzione su GitHub Container Registry (GHCR) quando viene fatto push su `main`.
+
+L'immagine pubblicata è disponibile come:
+
+```text
+ghcr.io/<account-github>/ui-quadrocapi:latest
+```
+
+Non è necessario eseguire Docker sul computer per attivare questi processi. È sufficiente fare push su `main`:
+
+```bash
+git push origin main
+```
+
+Per lo sviluppo locale con hot reload:
+
+```bash
+docker compose up --build
+```
+
+La configurazione Compose usa lo stage Docker `development`. Il Dockerfile usa invece uno stage production ottimizzato con Next.js standalone, che include solo i file e le dipendenze necessarie all'avvio dell'applicazione.
+
+Per avviare localmente l'immagine di produzione pubblicata:
+
+```bash
+docker run --rm -p 3000:3000 ghcr.io/<account-github>/ui-quadrocapi:latest
+```
+
+Il package GHCR può essere impostato come pubblico dalle impostazioni del package su GitHub. Vercel, invece, non utilizza automaticamente l'immagine GHCR: costruisce il progetto separatamente dal repository.
+
 ## 🚀 Sviluppi Futuri (Work in Progress)
 
 Il progetto è in continua evoluzione per rispondere sempre meglio alle esigenze delle Comunità Capi:
+
 - ⚖️ **Validazione Vincoli Scout**: Controllo automatico (tramite warning visivi) per la verifica della **diarchia** negli staff e per assicurarsi che i requisiti di **formazione** (presenza di capi brevettati) siano rispettati.
 
 ## 🤝 Contribuire
+
 Ogni contributo è prezioso! Se hai idee per nuove funzionalità o vuoi segnalare un bug:
 
 - Apri una Issue nella repository.
 - Se vuoi scrivere del codice, fai un fork del progetto e proponi una Pull Request.
 
 ## 📝 Licenza
+
 Questo progetto è distribuito sotto licenza MIT. Sentiti libero di utilizzarlo e adattarlo alle esigenze della tua Comunità Capi.
 Buona Caccia e Buon Cammino! 🎒
