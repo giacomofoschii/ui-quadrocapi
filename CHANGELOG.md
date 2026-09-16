@@ -1,3 +1,9 @@
+# [1.8.0](https://github.com/giacomofoschii/ui-quadrocapi/compare/v1.7.0...v1.8.0) (2026-09-16)
+
+### Features
+
+- implement Liveblocks session handling in authentication route ([43c1a9f](https://github.com/giacomofoschii/ui-quadrocapi/commit/43c1a9f441f55ac0f53581f5e0781603bc1cc83c))
+
 # [1.7.0](https://github.com/giacomofoschii/ui-quadrocapi/compare/v1.6.0...v1.7.0) (2026-09-16)
 
 ### Features
