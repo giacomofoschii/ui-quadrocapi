@@ -24,7 +24,7 @@ body {
   background: var(--wood-dark);
   font-family: 'Work Sans', sans-serif;
   color: var(--ink);
-  touch-action: none;
+  touch-action: auto;
   user-select: none;
   -webkit-user-select: none;
 }
@@ -314,4 +314,70 @@ button[class*='border-[#2E6E9E]'] {
 .custom-modal-content button:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+}
+
+.mobile-action-bar {
+  scrollbar-width: none;
+}
+
+.mobile-action-bar::-webkit-scrollbar {
+  display: none;
+}
+
+button,
+input,
+label {
+  touch-action: manipulation;
+}
+
+/* --- ADATTAMENTI MOBILE --- */
+@media (max-width: 768px) {
+  #sidebar {
+    width: min(250px, calc(100vw - 24px));
+    min-width: min(250px, calc(100vw - 24px));
+    padding: 14px 10px 12px;
+  }
+
+  .mobile-action-bar .action-btn {
+    min-height: 40px;
+    white-space: nowrap;
+  }
+
+  .mobile-action-bar .dropdown-menu {
+    position: fixed;
+    top: 56px;
+    right: 8px;
+    max-width: calc(100vw - 16px);
+  }
+
+  .mobile-action-bar .menu-item {
+    min-height: 40px;
+  }
+
+  .custom-modal-content {
+    max-height: calc(100dvh - 32px);
+    overflow-y: auto;
+  }
+
+  /* Carte più compatte */
+  .tag {
+    font-size: 16px;
+    padding: 8px 24px 8px 8px;
+  }
+
+  .tag.in-group {
+    font-size: 17px;
+  }
+
+  /* Simboli più piccoli sulle carte */
+  .card-symbol {
+    min-width: 18px;
+    height: 18px;
+    font-size: 12px;
+  }
+
+  /* Intestazioni delle staffe ridotte */
+  .group-title {
+    font-size: 18px !important;
+  }
 }
