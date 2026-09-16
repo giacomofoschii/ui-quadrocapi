@@ -1,3 +1,10 @@
+# [1.14.0](https://github.com/giacomofoschii/ui-quadrocapi/compare/v1.13.0...v1.14.0) (2026-09-16)
+
+### Features
+
+- enhance mobile layout and card editing functionality ([45eaed1](https://github.com/giacomofoschii/ui-quadrocapi/commit/45eaed1cb9d57bfa0f3c1e8049944d6e3ac31b2b))
+- restore functioning desktop version ([9848cba](https://github.com/giacomofoschii/ui-quadrocapi/commit/9848cbac72cb6c456c41b7c53e7405c396d84eea))
+
 # [1.13.0](https://github.com/giacomofoschii/ui-quadrocapi/compare/v1.12.0...v1.13.0) (2026-09-16)
 
 ### Features
