@@ -1,3 +1,9 @@
+# [1.13.0](https://github.com/giacomofoschii/ui-quadrocapi/compare/v1.12.0...v1.13.0) (2026-09-16)
+
+### Features
+
+- implement mobile sidebar functionality with toggle and overlay ([12b6739](https://github.com/giacomofoschii/ui-quadrocapi/commit/12b673998ef697515d746e6b9c90a21366c8f7c5))
+
 # [1.12.0](https://github.com/giacomofoschii/ui-quadrocapi/compare/v1.11.0...v1.12.0) (2026-09-16)
 
 ### Features
