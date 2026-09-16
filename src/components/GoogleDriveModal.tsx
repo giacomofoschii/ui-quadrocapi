@@ -41,13 +41,13 @@ export function GoogleDriveModal({
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex justify-between items-center mb-[20px] border-b border-[rgba(0,0,0,0.1)] pb-[12px]">
-          <h2 className="text-[18px] font-bold text-[#3a2f1a] font-['Space_Grotesk'] m-0 flex items-center gap-2">
+          <h2 className="text-[18px] font-bold text-[#3a2f1a] font-['Space_Grotesk'] m-0 flex items-center gap-[10px]">
             <Image
               src="/drive-logo.png"
               alt="Drive"
               width={20}
               height={20}
-              className="object-contain"
+              className="object-contain shrink-0"
             />
             Il tuo Google Drive
           </h2>
