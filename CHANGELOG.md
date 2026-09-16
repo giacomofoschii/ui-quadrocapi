@@ -1,3 +1,9 @@
+# [1.7.0](https://github.com/giacomofoschii/ui-quadrocapi/compare/v1.6.0...v1.7.0) (2026-09-16)
+
+### Features
+
+- enhance README ([f254723](https://github.com/giacomofoschii/ui-quadrocapi/commit/f25472349eb89b415cd6c5d91f2a32ce569fc3f0))
+
 # [1.6.0](https://github.com/giacomofoschii/ui-quadrocapi/compare/v1.5.0...v1.6.0) (2026-09-16)
 
 ### Features
