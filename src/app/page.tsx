@@ -810,7 +810,7 @@ function QuadroCapiApp() {
     >
       <LiveCursors />
       {/* ---------- BANNER CON LOGO E MARQUEE IN GRASSETTO ---------- */}
-      <div className="hidden md:flex w-full overflow-hidden bg-gradient-to-r from-[var(--wood-dark)] via-[var(--wood)] to-[var(--wood-dark)] border-b-[2px] border-black/35 shadow-[0_2px_8px_rgba(0,0,0,0.3)] shrink-0 z-20 flex items-center h-[52px] relative">
+      <div className="mobile-banner w-full overflow-hidden bg-gradient-to-r from-[var(--wood-dark)] via-[var(--wood)] to-[var(--wood-dark)] border-b-[2px] border-black/35 shadow-[0_2px_8px_rgba(0,0,0,0.3)] shrink-0 z-20 flex items-center h-[52px] relative">
         <div className="absolute inset-0 flex items-center overflow-hidden pointer-events-none">
           <div className="banner-track h-full items-center">
             <span className="inline-block whitespace-nowrap px-[50px] font-['Space_Grotesk'] font-bold text-[22px] tracking-[0.5px] text-[#FFF3DC] drop-shadow-[0_2px_3px_rgba(0,0,0,0.35)]">
@@ -862,7 +862,7 @@ function QuadroCapiApp() {
       </div>
       {/* ---------- TOP RIGHT CONTROLS ---------- */}
       <div
-        className="mobile-action-bar absolute top-[8px] left-[112px] right-[8px] z-[100] flex gap-[10px] overflow-x-auto pb-1 md:left-auto md:right-[16px]"
+        className="mobile-action-bar absolute top-[8px] right-[16px] z-[100] flex gap-[10px]"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mobile-desktop-only relative">
@@ -965,24 +965,19 @@ function QuadroCapiApp() {
           📸 Esporta PNG
         </button>
       </div>
-      {/* Bottone Menu Mobile in alto a sinistra (visibile solo su schermi piccoli) */}
       <button
         className={`mobile-menu-toggle absolute top-[8px] left-[16px] z-[200] ${ACTION_BTN_CLASS}`}
-        onClick={() => setIsSidebarMobileOpen(!isSidebarMobileOpen)}
+        onClick={() => setIsSidebarMobileOpen((open) => !open)}
       >
         {isSidebarMobileOpen ? '❌ Chiudi' : '☰ Capi'}
       </button>
-
       <div className="flex flex-1 min-h-0 relative">
-        {/* Overlay scuro: cliccandolo si chiude la sidebar */}
         {isSidebarMobileOpen && (
           <div
             className="mobile-sidebar-overlay absolute inset-0 bg-black/60 z-[140] backdrop-blur-sm"
             onClick={() => setIsSidebarMobileOpen(false)}
           />
         )}
-
-        {/* Sidebar wrapper con logica a scorrimento (Off-canvas) */}
         <div
           className={`mobile-sidebar-shell z-[150] h-full transition-transform duration-300 ease-in-out ${isSidebarMobileOpen ? 'mobile-sidebar-open' : ''}`}
         >
@@ -1049,11 +1044,8 @@ function QuadroCapiApp() {
               onSizeChange={(value) => setCurrentSize(value)}
             />
           </div>
-
-          {/* NUOVO CONTENITORE SCORREVOLE */}
-          <div className="flex-1 overflow-auto relative touch-pan-x touch-pan-y bg-[var(--board-bg)]">
-            {/* TAVOLO GIGANTE: 2000x1500px, per poter scorrere in tutte le direzioni su mobile */}
-            <div className="w-[2000px] h-[1500px] relative">
+          <div className="mobile-canvas-scroll flex-1 overflow-auto relative">
+            <div className="mobile-canvas-surface">
               <BoardCanvas
                 boardRef={boardRef}
                 canvasRef={canvasRef}
