@@ -110,14 +110,21 @@ export function BoardSidebar({
         </div>
       )}
       <div className="mobile-sidebar-actions" aria-label="Azioni lavagna">
-        <button type="button" onClick={onAddGroup}>
+        <button
+          type="button"
+          onPointerDown={(event) => event.stopPropagation()}
+          onClick={(event) => {
+            event.stopPropagation();
+            onAddGroup();
+          }}
+        >
           ➕ Nuova Staff
         </button>
         <button type="button" onClick={onExportPNG}>
           📸 Esporta PNG
         </button>
         <label>
-          📂 Carica da PC
+          📂 Carica da locale
           <input
             type="file"
             accept=".json"
