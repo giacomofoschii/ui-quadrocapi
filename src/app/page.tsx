@@ -1,10 +1,20 @@
 'use client';
 
+import {
+  RoomProvider,
+  useMyPresence,
+  useStorage,
+  useMutation,
+} from '@liveblocks/react/suspense';
+import { ClientSideSuspense } from '@liveblocks/react';
+import { LiveList } from '@liveblocks/client';
+
 import { useSession, signIn, signOut } from 'next-auth/react';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import html2canvas from 'html2canvas';
 
+import { LiveCursors } from '@/components/LiveCursors';
 import { BoardCard } from '@/components/BoardCard';
 import { BoardCanvas } from '@/components/BoardCanvas';
 import { BoardSidebar } from '@/components/BoardSidebar';
@@ -14,7 +24,6 @@ import { GoogleDriveModal } from '@/components/GoogleDriveModal';
 import { GROUP_COLORS, SYMBOLS } from '@/lib/constants';
 import { createId } from '@/lib/ids';
 import type { Board, Card, Group } from '@/lib/types';
-import { useBoardPersistence } from '@/lib/useBoardPersistence';
 import { useGoogleDrive } from '@/lib/useGoogleDrive';
 
 const ACTION_BTN_CLASS =
@@ -36,10 +45,43 @@ const INITIAL_BOARDS: Board[] = [
   },
 ];
 
-export default function QuadroCapiApp() {
+function QuadroCapiApp() {
+  const [{ cursor }, updateMyPresence] = useMyPresence();
   // --- STATO DELLE LAVAGNE & AUTOSAVE ---
   const { data: session } = useSession();
-  const [boards, setBoards] = useState<Board[]>(INITIAL_BOARDS);
+
+  const boards = useStorage((root) => root.boards) as Board[];
+
+  const updateBoard = useMutation(
+    ({ storage }, boardId: string, updates: Partial<Board>) => {
+      const boardsList = storage.get('boards') as LiveList<Board>;
+      const index = Array.from(boardsList).findIndex(
+        (b: Board) => b.id === boardId
+      );
+
+      if (index !== -1) {
+        const currentBoard = boardsList.get(index);
+
+        if (currentBoard) {
+          boardsList.set(index, { ...currentBoard, ...updates });
+        }
+      }
+    },
+    []
+  );
+
+  const addBoardMutation = useMutation(({ storage }, newBoard: Board) => {
+    const boardsList = storage.get('boards') as LiveList<Board>;
+    boardsList.push(newBoard);
+  }, []);
+
+  const deleteBoardMutation = useMutation(({ storage }, boardId: string) => {
+    const boardsList = storage.get('boards') as LiveList<Board>;
+    const index = Array.from(boardsList).findIndex(
+      (b: Board) => b.id === boardId
+    );
+    if (index !== -1) boardsList.delete(index);
+  }, []);
   const [activeBoardId, setActiveBoardId] = useState('b_initial');
   const [tabMenuOpen, setTabMenuOpen] = useState<{
     id: string;
@@ -58,36 +100,24 @@ export default function QuadroCapiApp() {
 
   const setCards = useCallback(
     (updater: Card[] | ((prev: Card[]) => Card[])) => {
-      setBoards((prev) =>
-        prev.map((b) =>
-          b.id === activeBoardId
-            ? {
-                ...b,
-                cards:
-                  typeof updater === 'function' ? updater(b.cards) : updater,
-              }
-            : b
-        )
-      );
+      const currentBoard = boards.find((b) => b.id === activeBoardId);
+      if (!currentBoard) return;
+      const newCards =
+        typeof updater === 'function' ? updater(currentBoard.cards) : updater;
+      updateBoard(activeBoardId, { cards: newCards });
     },
-    [activeBoardId]
+    [activeBoardId, boards, updateBoard]
   );
 
   const setGroups = useCallback(
     (updater: Group[] | ((prev: Group[]) => Group[])) => {
-      setBoards((prev) =>
-        prev.map((b) =>
-          b.id === activeBoardId
-            ? {
-                ...b,
-                groups:
-                  typeof updater === 'function' ? updater(b.groups) : updater,
-              }
-            : b
-        )
-      );
+      const currentBoard = boards.find((b) => b.id === activeBoardId);
+      if (!currentBoard) return;
+      const newGroups =
+        typeof updater === 'function' ? updater(currentBoard.groups) : updater;
+      updateBoard(activeBoardId, { groups: newGroups });
     },
-    [activeBoardId]
+    [activeBoardId, boards, updateBoard]
   );
 
   // --- STATI UI LOCALI ---
@@ -142,16 +172,6 @@ export default function QuadroCapiApp() {
   const ghostRef = useRef<HTMLDivElement | null>(null);
   const [renderTrigger, forceRender] = useState({});
 
-  useBoardPersistence(
-    boards,
-    activeBoardId,
-    setBoards,
-    setActiveBoardId,
-    dragState,
-    isDrawing,
-    renderTrigger
-  );
-
   // =========================================================================
   // SETUP CANVAS & EVENTI
   // =========================================================================
@@ -185,22 +205,28 @@ export default function QuadroCapiApp() {
     return () => window.removeEventListener('resize', sizeCanvas);
   }, [sizeCanvas]);
 
+  const currentCanvasData = boards.find(
+    (b) => b.id === activeBoardId
+  )?.canvasData;
+
   useEffect(() => {
     const canvas = canvasRef.current;
     const ctx = ctxRef.current;
     if (!canvas || !ctx) return;
 
+    if (isDrawing.current) return;
+
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    const board = boardsRef.current.find((b) => b.id === activeBoardId);
-    if (board?.canvasData) {
+
+    if (currentCanvasData) {
       const img = new window.Image();
       img.onload = () => {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
       };
-      img.src = board.canvasData;
+      img.src = currentCanvasData;
     }
-  }, [activeBoardId]);
+  }, [activeBoardId, currentCanvasData]);
 
   useEffect(() => {
     const handleMove = (e: PointerEvent) => {
@@ -321,33 +347,24 @@ export default function QuadroCapiApp() {
   const switchBoard = (id: string) => {
     if (id === activeBoardId) return;
     const currentCanvas = saveCurrentCanvasData();
-    setBoards((prev) =>
-      prev.map((b) =>
-        b.id === activeBoardId ? { ...b, canvasData: currentCanvas } : b
-      )
-    );
+    updateBoard(activeBoardId, { canvasData: currentCanvas });
     setTabMenuOpen(null);
     setActiveBoardId(id);
   };
 
   const addBoard = () => {
     const currentCanvas = saveCurrentCanvasData();
+    updateBoard(activeBoardId, { canvasData: currentCanvas });
+
     const newId = createId('b');
-    setBoards((prev) => {
-      const saved = prev.map((b) =>
-        b.id === activeBoardId ? { ...b, canvasData: currentCanvas } : b
-      );
-      return [
-        ...saved,
-        {
-          id: newId,
-          name: `Lavagna ${prev.length + 1}`,
-          cards: [],
-          groups: [],
-          canvasData: null,
-        },
-      ];
+    addBoardMutation({
+      id: newId,
+      name: `Lavagna ${boards.length + 1}`,
+      cards: [],
+      groups: [],
+      canvasData: null,
     });
+
     setTabMenuOpen(null);
     setActiveBoardId(newId);
   };
@@ -368,44 +385,40 @@ export default function QuadroCapiApp() {
 
   const duplicateBoard = (id: string) => {
     const currentCanvas = saveCurrentCanvasData();
-    setBoards((prev) => {
-      const saved = prev.map((b) =>
-        b.id === activeBoardId ? { ...b, canvasData: currentCanvas } : b
-      );
-      const boardToCopy = saved.find((b) => b.id === id);
-      if (!boardToCopy) return saved;
+    updateBoard(activeBoardId, { canvasData: currentCanvas });
 
-      const newId = createId('b');
-      const copiedCards = boardToCopy.cards.map((c) => ({
-        ...c,
-        id: createId('c'),
-      }));
-      const copiedGroups = boardToCopy.groups.map((g) => ({
-        ...g,
-        id: createId('g'),
-      }));
+    const boardToCopy = boards.find((b) => b.id === id);
+    if (!boardToCopy) return;
 
-      copiedCards.forEach((c, idx) => {
-        const originalCard = boardToCopy.cards[idx];
-        if (originalCard.groupId) {
-          const groupIdx = boardToCopy.groups.findIndex(
-            (g) => g.id === originalCard.groupId
-          );
-          if (groupIdx !== -1) c.groupId = copiedGroups[groupIdx].id;
-        }
-      });
+    const newId = createId('b');
 
-      return [
-        ...saved,
-        {
-          ...boardToCopy,
-          id: newId,
-          name: `${boardToCopy.name} (Copia)`,
-          cards: copiedCards,
-          groups: copiedGroups,
-        },
-      ];
+    const copiedCards = boardToCopy.cards.map((c) => ({
+      ...c,
+      id: createId('c'),
+    }));
+    const copiedGroups = boardToCopy.groups.map((g) => ({
+      ...g,
+      id: createId('g'),
+    }));
+
+    copiedCards.forEach((c, idx) => {
+      const originalCard = boardToCopy.cards[idx];
+      if (originalCard.groupId) {
+        const groupIdx = boardToCopy.groups.findIndex(
+          (g) => g.id === originalCard.groupId
+        );
+        if (groupIdx !== -1) c.groupId = copiedGroups[groupIdx].id;
+      }
     });
+
+    addBoardMutation({
+      ...boardToCopy,
+      id: newId,
+      name: `${boardToCopy.name} (Copia)`,
+      cards: copiedCards,
+      groups: copiedGroups,
+    });
+
     setTabMenuOpen(null);
   };
 
@@ -413,14 +426,14 @@ export default function QuadroCapiApp() {
     const board = boards.find((b) => b.id === id);
     if (!board) return;
     setTabMenuOpen(null);
+
     const newName = await showPrompt(
       'Inserisci il nuovo nome per la lavagna:',
       board.name
     );
+
     if (newName && newName.trim()) {
-      setBoards((prev) =>
-        prev.map((b) => (b.id === id ? { ...b, name: newName.trim() } : b))
-      );
+      updateBoard(id, { name: newName.trim() });
     }
   };
 
@@ -435,11 +448,14 @@ export default function QuadroCapiApp() {
     );
     if (!confirmed) return;
 
-    setBoards((prev) => {
-      const filtered = prev.filter((b) => b.id !== id);
-      if (id === activeBoardId) setActiveBoardId(filtered[0].id);
-      return filtered;
-    });
+    if (id === activeBoardId) {
+      const fallbackBoard = boards.find((b) => b.id !== id);
+      if (fallbackBoard) {
+        setActiveBoardId(fallbackBoard.id);
+      }
+    }
+
+    deleteBoardMutation(id);
   };
 
   // =========================================================================
@@ -496,11 +512,7 @@ export default function QuadroCapiApp() {
     (e.target as HTMLElement).releasePointerCapture(e.pointerId);
 
     const currentCanvas = saveCurrentCanvasData();
-    setBoards((prev) =>
-      prev.map((b) =>
-        b.id === activeBoardId ? { ...b, canvasData: currentCanvas } : b
-      )
-    );
+    updateBoard(activeBoardId, { canvasData: currentCanvas });
   };
 
   const showConfirm = (message: string): Promise<boolean> => {
@@ -588,22 +600,15 @@ export default function QuadroCapiApp() {
 
       const newId = createId('b');
       const currentCanvas = saveCurrentCanvasData();
-      setBoards((prev) => {
-        const saved = prev.map((board) =>
-          board.id === activeBoardId
-            ? { ...board, canvasData: currentCanvas }
-            : board
-        );
-        return [
-          ...saved,
-          {
-            id: newId,
-            name: fileName.replace('.json', '') || 'Lavagna Importata',
-            cards: data.state?.cards ?? [],
-            groups: data.state?.groups ?? [],
-            canvasData: data.canvas ?? null,
-          },
-        ];
+
+      updateBoard(activeBoardId, { canvasData: currentCanvas });
+
+      addBoardMutation({
+        id: newId,
+        name: fileName.replace('.json', '') || 'Lavagna Importata',
+        cards: data.state?.cards ?? [],
+        groups: data.state?.groups ?? [],
+        canvasData: data.canvas ?? null,
       });
       setActiveBoardId(newId);
     },
@@ -672,21 +677,18 @@ export default function QuadroCapiApp() {
           const newId = createId('b');
           const currentCanvas = saveCurrentCanvasData();
 
-          setBoards((prev) => {
-            const saved = prev.map((b) =>
-              b.id === activeBoardId ? { ...b, canvasData: currentCanvas } : b
-            );
-            return [
-              ...saved,
-              {
-                id: newId,
-                name: file.name.replace('.json', '') || 'Lavagna Importata',
-                cards: data.state.cards || [],
-                groups: data.state.groups || [],
-                canvasData: data.canvas || null,
-              },
-            ];
+          // 1. Salva il disegno attuale prima di cambiare lavagna
+          updateBoard(activeBoardId, { canvasData: currentCanvas });
+
+          // 2. Spingi la lavagna importata sul cloud
+          addBoardMutation({
+            id: newId,
+            name: file.name.replace('.json', '') || 'Lavagna Importata',
+            cards: data.state.cards || [],
+            groups: data.state.groups || [],
+            canvasData: data.canvas || null,
           });
+
           setActiveBoardId(newId);
         } else {
           await showAlert('Formato non supportato.');
@@ -780,6 +782,12 @@ export default function QuadroCapiApp() {
   return (
     <div
       className="relative flex flex-col h-screen overflow-hidden font-['Work_Sans'] bg-[var(--wood-dark)] select-none"
+      onPointerMove={(e) =>
+        updateMyPresence({
+          cursor: { x: Math.round(e.clientX), y: Math.round(e.clientY) },
+        })
+      } // <-- AGGIUNTO
+      onPointerLeave={() => updateMyPresence({ cursor: null })} // <-- AGGIUNTO
       onClick={() => {
         setEditingCardId(null);
         setOpenMenu(null);
@@ -787,6 +795,7 @@ export default function QuadroCapiApp() {
         setTabMenuOpen(null);
       }}
     >
+      <LiveCursors />
       {/* ---------- BANNER CON LOGO E MARQUEE IN GRASSETTO ---------- */}
       <div className="w-full overflow-hidden bg-gradient-to-r from-[var(--wood-dark)] via-[var(--wood)] to-[var(--wood-dark)] border-b-[2px] border-black/35 shadow-[0_2px_8px_rgba(0,0,0,0.3)] shrink-0 z-20 flex items-center h-[52px] relative">
         <div className="absolute inset-0 flex items-center overflow-hidden pointer-events-none">
@@ -983,13 +992,7 @@ export default function QuadroCapiApp() {
                   canvasRef.current!.height
                 );
                 const currentCanvas = saveCurrentCanvasData();
-                setBoards((prev) =>
-                  prev.map((b) =>
-                    b.id === activeBoardId
-                      ? { ...b, canvasData: currentCanvas }
-                      : b
-                  )
-                );
+                updateBoard(activeBoardId, { canvasData: currentCanvas });
               }
             }}
             onAddGroup={handleAddGroup}
@@ -1167,5 +1170,25 @@ export default function QuadroCapiApp() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function Page() {
+  return (
+    <RoomProvider
+      id="lavagna-principale"
+      initialPresence={{ cursor: null }}
+      initialStorage={{ boards: new LiveList(INITIAL_BOARDS) }}
+    >
+      <ClientSideSuspense
+        fallback={
+          <div className="flex h-screen items-center justify-center bg-[var(--wood-dark)] text-[#e4d19c] font-['Space_Grotesk'] font-bold text-2xl">
+            Apertura lavagna multiplayer...
+          </div>
+        }
+      >
+        <QuadroCapiApp />
+      </ClientSideSuspense>
+    </RoomProvider>
   );
 }
