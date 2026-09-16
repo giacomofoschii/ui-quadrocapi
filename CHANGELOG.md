@@ -1,3 +1,9 @@
+# [1.9.0](https://github.com/giacomofoschii/ui-quadrocapi/compare/v1.8.0...v1.9.0) (2026-09-16)
+
+### Features
+
+- integrate LiveblocksProvider for enhanced multiplayer functionality ([7f6c868](https://github.com/giacomofoschii/ui-quadrocapi/commit/7f6c8687069c5d31c5409e39aa64d91018f7c7a4))
+
 # [1.8.0](https://github.com/giacomofoschii/ui-quadrocapi/compare/v1.7.0...v1.8.0) (2026-09-16)
 
 ### Features
