@@ -1,3 +1,11 @@
+# [1.6.0](https://github.com/giacomofoschii/ui-quadrocapi/compare/v1.5.0...v1.6.0) (2026-09-16)
+
+### Features
+
+- add Liveblocks dependencies to package.json and package-lock.json ([9c8f767](https://github.com/giacomofoschii/ui-quadrocapi/commit/9c8f76758b38c0a4433f1c889cb0f467701ec8d9))
+- implement Liveblocks session handling and authentication route ([c583b29](https://github.com/giacomofoschii/ui-quadrocapi/commit/c583b2996568341962c3d76e7425625ca7313c2d))
+- integrate Liveblocks for collaborative board functionality and remove board persistence logic ([ff74c87](https://github.com/giacomofoschii/ui-quadrocapi/commit/ff74c8748066793a75ecb7faa22f5cce7e81b4c8))
+
 # [1.5.0](https://github.com/giacomofoschii/ui-quadrocapi/compare/v1.4.0...v1.5.0) (2026-09-16)
 
 ### Features
