@@ -82,7 +82,7 @@ function QuadroCapiApp() {
     );
     if (index !== -1) boardsList.delete(index);
   }, []);
-  const [activeBoardId, setActiveBoardId] = useState('b_initial');
+  const [selectedBoardId, setSelectedBoardId] = useState('b_initial');
   const [tabMenuOpen, setTabMenuOpen] = useState<{
     id: string;
     left: number;
@@ -93,6 +93,10 @@ function QuadroCapiApp() {
   useEffect(() => {
     boardsRef.current = boards;
   }, [boards]);
+
+  const activeBoardId = boards.some((board) => board.id === selectedBoardId)
+    ? selectedBoardId
+    : (boards[0]?.id ?? selectedBoardId);
 
   const activeBoard = boards.find((b) => b.id === activeBoardId) || boards[0];
   const cards = activeBoard.cards;
@@ -374,7 +378,7 @@ function QuadroCapiApp() {
     const currentCanvas = saveCurrentCanvasData();
     updateBoard(activeBoardId, { canvasData: currentCanvas });
     setTabMenuOpen(null);
-    setActiveBoardId(id);
+    setSelectedBoardId(id);
   };
 
   const addBoard = () => {
@@ -391,7 +395,7 @@ function QuadroCapiApp() {
     });
 
     setTabMenuOpen(null);
-    setActiveBoardId(newId);
+    setSelectedBoardId(newId);
   };
 
   const handleTabMenuClick = (e: React.MouseEvent, id: string) => {
@@ -476,7 +480,7 @@ function QuadroCapiApp() {
     if (id === activeBoardId) {
       const fallbackBoard = boards.find((b) => b.id !== id);
       if (fallbackBoard) {
-        setActiveBoardId(fallbackBoard.id);
+        setSelectedBoardId(fallbackBoard.id);
       }
     }
 
@@ -635,7 +639,7 @@ function QuadroCapiApp() {
         groups: data.state?.groups ?? [],
         canvasData: data.canvas ?? null,
       });
-      setActiveBoardId(newId);
+      setSelectedBoardId(newId);
     },
   });
 
@@ -726,7 +730,7 @@ function QuadroCapiApp() {
             canvasData: data.canvas || null,
           });
 
-          setActiveBoardId(newId);
+          setSelectedBoardId(newId);
         } else {
           await showAlert('Formato non supportato.');
         }
@@ -1098,6 +1102,7 @@ function QuadroCapiApp() {
           </div>
 
           <BoardTabs
+            className="mobile-board-tabs"
             boards={boards}
             activeBoardId={activeBoardId}
             tabMenuOpen={tabMenuOpen}
