@@ -1,3 +1,9 @@
+# [1.11.0](https://github.com/giacomofoschii/ui-quadrocapi/compare/v1.10.0...v1.11.0) (2026-09-16)
+
+### Features
+
+- enhance mobile interface with new sidebar actions and export functionality ([6b2a8a3](https://github.com/giacomofoschii/ui-quadrocapi/commit/6b2a8a35b4af9f170e629a64e0bb69cd64a7e978))
+
 # [1.10.0](https://github.com/giacomofoschii/ui-quadrocapi/compare/v1.9.0...v1.10.0) (2026-09-16)
 
 ### Features
