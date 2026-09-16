@@ -1,6 +1,7 @@
 'use client';
 
 import {
+  LiveblocksProvider,
   RoomProvider,
   useMyPresence,
   useStorage,
@@ -1175,20 +1176,22 @@ function QuadroCapiApp() {
 
 export default function Page() {
   return (
-    <RoomProvider
-      id="lavagna-principale"
-      initialPresence={{ cursor: null }}
-      initialStorage={{ boards: new LiveList(INITIAL_BOARDS) }}
-    >
-      <ClientSideSuspense
-        fallback={
-          <div className="flex h-screen items-center justify-center bg-[var(--wood-dark)] text-[#e4d19c] font-['Space_Grotesk'] font-bold text-2xl">
-            Apertura lavagna multiplayer...
-          </div>
-        }
+    <LiveblocksProvider authEndpoint="/api/liveblocks-auth">
+      <RoomProvider
+        id="lavagna-principale"
+        initialPresence={{ cursor: null }}
+        initialStorage={{ boards: new LiveList(INITIAL_BOARDS) }}
       >
-        <QuadroCapiApp />
-      </ClientSideSuspense>
-    </RoomProvider>
+        <ClientSideSuspense
+          fallback={
+            <div className="flex h-screen items-center justify-center bg-[var(--wood-dark)] text-[#e4d19c] font-['Space_Grotesk'] font-bold text-2xl">
+              Apertura lavagna multiplayer...
+            </div>
+          }
+        >
+          <QuadroCapiApp />
+        </ClientSideSuspense>
+      </RoomProvider>
+    </LiveblocksProvider>
   );
 }
