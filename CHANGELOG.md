@@ -1,3 +1,9 @@
+# [1.12.0](https://github.com/giacomofoschii/ui-quadrocapi/compare/v1.11.0...v1.12.0) (2026-09-16)
+
+### Features
+
+- update mobile sidebar actions to prevent event propagation ([1e68329](https://github.com/giacomofoschii/ui-quadrocapi/commit/1e683298a7d53b071118727cc8a181179139b0c6))
+
 # [1.11.0](https://github.com/giacomofoschii/ui-quadrocapi/compare/v1.10.0...v1.11.0) (2026-09-16)
 
 ### Features
