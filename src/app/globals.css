@@ -439,6 +439,11 @@ button[class*='border-[#2E6E9E]'] {
   }
 
   .mobile-canvas-scroll {
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
     touch-action: pan-x pan-y;
   }
 
@@ -457,6 +462,7 @@ button[class*='border-[#2E6E9E]'] {
   .mobile-canvas-surface {
     display: block;
     flex: none;
+    min-width: 2000px;
     width: 2000px;
     height: 1500px;
   }
