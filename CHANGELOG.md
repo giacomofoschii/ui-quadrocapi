@@ -1,3 +1,11 @@
+# [1.15.0](https://github.com/giacomofoschii/ui-quadrocapi/compare/v1.14.0...v1.15.0) (2026-09-16)
+
+### Features
+
+- add mobile board tabs and refactor board selection state ([bc24b3e](https://github.com/giacomofoschii/ui-quadrocapi/commit/bc24b3e69ec9ff49a20ab2c20b944c1b0750b7fa))
+- disable pointer events on mobile canvas surface ([34fd17d](https://github.com/giacomofoschii/ui-quadrocapi/commit/34fd17dc2324cd5f5080dd05cf427367cebaf7b1))
+- hide Liveblocks devtools in production ([9136f77](https://github.com/giacomofoschii/ui-quadrocapi/commit/9136f77a34b9bd76ab09c93e354a0e2cd018b70e))
+
 # [1.14.0](https://github.com/giacomofoschii/ui-quadrocapi/compare/v1.13.0...v1.14.0) (2026-09-16)
 
 ### Features
