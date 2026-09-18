@@ -108,63 +108,66 @@ function SessionGate({
     <main className="session-gate min-h-screen flex items-center justify-center p-5">
       <form
         onSubmit={submit}
-        className="session-gate-card w-full max-w-[420px] rounded-[12px] p-8 text-[var(--ink)]"
+        className="session-gate-card w-full max-w-[380px] rounded-[12px] px-6 pt-6 text-[var(--ink)]"
+        style={{ paddingBottom: 30 }}
       >
         <h1 className="m-0 text-center font-['Space_Grotesk'] text-3xl font-bold text-[#3a2f1a]">
           🗂️ Nuovo quadro
         </h1>
-        <p className="mb-8 mt-3 text-center font-['Work_Sans'] text-sm leading-[1.55] text-[#6b5a3c]">
+        <p className="mx-auto mb-8 mt-3 w-[80%] text-center font-['Work_Sans'] text-sm leading-[1.55] text-[#6b5a3c]">
           Crea un quadro privato oppure entra con l&apos;ID e il PIN condivisi.
         </p>
-        <div className="session-gate-tabs mb-7 flex gap-2 rounded-[9px] p-1.5">
+        <div className="session-gate-tabs w-[72%] self-center flex gap-1.5 rounded-[9px] p-1">
           <button
             type="button"
             onClick={() => setMode('create')}
-            className={`session-gate-tab flex-1 rounded-[7px] border px-3 py-2.5 font-bold ${mode === 'create' ? 'session-gate-tab-active' : ''}`}
+            className={`session-gate-tab flex-1 rounded-[7px] border px-2 py-2 font-bold ${mode === 'create' ? 'session-gate-tab-active' : ''}`}
           >
             Crea quadro
           </button>
           <button
             type="button"
             onClick={() => setMode('join')}
-            className={`session-gate-tab flex-1 rounded-[7px] border px-3 py-2.5 font-bold ${mode === 'join' ? 'session-gate-tab-active' : ''}`}
+            className={`session-gate-tab flex-1 rounded-[7px] border px-2 py-2 font-bold ${mode === 'join' ? 'session-gate-tab-active' : ''}`}
           >
             Entra
           </button>
         </div>
         {mode === 'join' && (
-          <div className="session-gate-fields mt-7">
+          <div className="session-gate-fields">
             <input
               value={sessionId}
               onChange={(event) => setSessionId(event.target.value)}
               placeholder="ID quadro"
               required
-              className="session-gate-input w-full rounded-[7px] px-3 py-3 outline-none"
+              className="session-gate-input mx-auto w-[72%] rounded-[7px] px-2.5 py-2.5 outline-none"
             />
             <input
+              type="password"
               value={pin}
               onChange={(event) => setPin(event.target.value)}
               placeholder="PIN o password"
               required
-              className="session-gate-input w-full rounded-[7px] px-3 py-3 outline-none"
+              className="session-gate-input mx-auto w-[72%] rounded-[7px] px-2.5 py-2.5 outline-none"
             />
           </div>
         )}
         {mode === 'create' && (
-          <div className="session-gate-fields mt-7">
+          <div className="session-gate-fields">
             <input
               value={sessionId}
               onChange={(event) => setSessionId(event.target.value)}
               placeholder="Scegli ID quadro"
               required
-              className="session-gate-input w-full rounded-[7px] px-3 py-3 outline-none"
+              className="session-gate-input mx-auto w-[72%] rounded-[7px] px-2.5 py-2.5 outline-none"
             />
             <input
+              type="password"
               value={pin}
               onChange={(event) => setPin(event.target.value)}
               placeholder="Scegli PIN o password"
               required
-              className="session-gate-input w-full rounded-[7px] px-3 py-3 outline-none"
+              className="session-gate-input mx-auto w-[72%] rounded-[7px] px-2.5 py-2.5 outline-none"
             />
           </div>
         )}
@@ -174,7 +177,7 @@ function SessionGate({
         <button
           type="submit"
           disabled={loading}
-          className="session-gate-submit mt-7 w-full rounded-[7px] px-4 py-3.5 font-bold disabled:opacity-60"
+          className="session-gate-submit w-[58%] rounded-[7px] px-3 py-2.5 font-bold disabled:opacity-60"
         >
           {loading
             ? 'Controllo...'
