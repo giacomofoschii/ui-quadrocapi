@@ -156,7 +156,7 @@ export function BoardSidebar({
       <div className="pool-label text-[12.5px] m-[0_4px_8px] font-medium">
         In che staff li mettiamo?
       </div>
-      <div className="flex-1 overflow-y-auto p-[4px] flex flex-wrap content-start gap-[10px]">
+      <div className="min-h-0 flex-1 overflow-y-auto p-[4px] flex flex-wrap content-start gap-[10px]">
         {cards.filter((c) => c.groupId === null).length === 0 ? (
           <div className="pool-empty font-['Space_Grotesk'] text-[15px] p-[20px_6px] w-full">
             I capi sono finiti.
