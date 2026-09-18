@@ -1,3 +1,9 @@
+## [1.21.1](https://github.com/giacomofoschii/ui-quadrocapi/compare/v1.21.0...v1.21.1) (2026-09-18)
+
+### Bug Fixes
+
+- resolve board invisible ([f033507](https://github.com/giacomofoschii/ui-quadrocapi/commit/f0335071b470276e48d743885117689576ac7781))
+
 # [1.21.0](https://github.com/giacomofoschii/ui-quadrocapi/compare/v1.20.0...v1.21.0) (2026-09-18)
 
 ### Bug Fixes
