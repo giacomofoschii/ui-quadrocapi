@@ -172,7 +172,9 @@ function SessionGate({
           </div>
         )}
         {error && (
-          <p className="mt-6 text-sm font-bold text-[#b23b2e]">{error}</p>
+          <p className="mt-6 text-center text-sm font-bold text-[#b23b2e]">
+            {error}
+          </p>
         )}
         <button
           type="submit"
