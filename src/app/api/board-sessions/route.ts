@@ -1,9 +1,11 @@
 import { Liveblocks } from '@liveblocks/node';
 import { NextRequest, NextResponse } from 'next/server';
 
-const liveblocks = new Liveblocks({
-  secret: process.env.LIVEBLOCKS_SECRET_KEY as string,
-});
+function getLiveblocksClient() {
+  return new Liveblocks({
+    secret: process.env.LIVEBLOCKS_SECRET_KEY as string,
+  });
+}
 
 type SessionRequest = {
   action: 'create' | 'join' | 'delete';
@@ -23,6 +25,8 @@ export async function POST(request: NextRequest) {
   if (!id || !pin || !roomId) {
     return errorResponse('ID, PIN e room mancanti.', 400);
   }
+
+  const liveblocks = getLiveblocksClient();
 
   try {
     if (action === 'create') {
