@@ -316,6 +316,85 @@ button[class*='border-[#2E6E9E]'] {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
 }
 
+.session-gate {
+  background:
+    radial-gradient(
+      circle at 20% 10%,
+      rgba(147, 114, 74, 0.55),
+      transparent 35%
+    ),
+    linear-gradient(145deg, var(--wood-dark), var(--wood));
+}
+
+.session-gate-card {
+  background: var(--tag-bg);
+  border: 2px solid var(--tag-border);
+  box-shadow: 0 12px 48px rgba(40, 28, 14, 0.5);
+}
+
+.session-gate-tabs {
+  background: rgba(58, 47, 26, 0.08);
+  border: 1px solid rgba(58, 47, 26, 0.14);
+}
+
+.session-gate-tab {
+  border-color: rgba(58, 47, 26, 0.18);
+  background: var(--tag-bg);
+  color: #3a2f1a;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.session-gate-tab:hover {
+  transform: translateY(-1px);
+  background: #fffaf0;
+}
+
+.session-gate-tab-active {
+  border-color: #2f7a5c;
+  background: #2f7a5c;
+  color: white;
+  box-shadow: 0 3px 8px rgba(47, 122, 92, 0.28);
+}
+
+.session-gate-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.session-gate-input {
+  border: 1px solid rgba(58, 47, 26, 0.2);
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: inset 0 1px 3px rgba(40, 28, 14, 0.08);
+}
+
+.session-gate-input:focus {
+  border-color: #e8b84b;
+  outline: 2px solid #e8b84b;
+  outline-offset: 0;
+}
+
+.session-gate-submit {
+  border: 1px solid #2a1f0a;
+  background: #3a2f1a;
+  color: white;
+  cursor: pointer;
+  box-shadow: 0 3px 8px rgba(40, 28, 14, 0.25);
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease;
+}
+
+.session-gate-submit:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: #2f7a5c;
+}
+
 .mobile-action-bar {
   display: flex;
 }
