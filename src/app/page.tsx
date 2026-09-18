@@ -96,7 +96,7 @@ function SessionGate({
     setLoading(false);
     if (!response.ok) {
       const data = (await response.json()) as { error?: string };
-      setError(data.error ?? 'Impossibile aprire la sessione.');
+      setError(data.error ?? 'Impossibile aprire il quadro.');
       return;
     }
     const query = `?session=${encodeURIComponent(id)}&pin=${encodeURIComponent(sessionPin)}`;
@@ -105,83 +105,82 @@ function SessionGate({
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[var(--wood-dark)] p-5">
+    <main className="session-gate min-h-screen flex items-center justify-center p-5">
       <form
         onSubmit={submit}
-        className="w-full max-w-[420px] rounded-[14px] border border-white/20 bg-[var(--paper)] p-6 text-[var(--ink)] shadow-2xl"
+        className="session-gate-card w-full max-w-[420px] rounded-[12px] p-8 text-[var(--ink)]"
       >
-        <h1 className="m-0 font-['Space_Grotesk'] text-3xl font-bold text-[#3a2f1a]">
-          Una nuova lavagna
+        <h1 className="m-0 text-center font-['Space_Grotesk'] text-3xl font-bold text-[#3a2f1a]">
+          🗂️ Nuovo quadro
         </h1>
-        <p className="mb-5 mt-2 font-['Work_Sans'] text-sm text-[#6b5a3c]">
-          Crea una sessione privata oppure entra con l&apos;ID e il PIN
-          condivisi.
+        <p className="mb-8 mt-3 text-center font-['Work_Sans'] text-sm leading-[1.55] text-[#6b5a3c]">
+          Crea un quadro privato oppure entra con l&apos;ID e il PIN condivisi.
         </p>
-        <div className="mb-4 flex gap-2">
+        <div className="session-gate-tabs mb-7 flex gap-2 rounded-[9px] p-1.5">
           <button
             type="button"
             onClick={() => setMode('create')}
-            className={`flex-1 rounded-[7px] border px-3 py-2 font-bold ${mode === 'create' ? 'bg-[#2f7a5c] text-white' : 'bg-transparent text-[#3a2f1a]'}`}
+            className={`session-gate-tab flex-1 rounded-[7px] border px-3 py-2.5 font-bold ${mode === 'create' ? 'session-gate-tab-active' : ''}`}
           >
-            Crea sessione
+            Crea quadro
           </button>
           <button
             type="button"
             onClick={() => setMode('join')}
-            className={`flex-1 rounded-[7px] border px-3 py-2 font-bold ${mode === 'join' ? 'bg-[#2f7a5c] text-white' : 'bg-transparent text-[#3a2f1a]'}`}
+            className={`session-gate-tab flex-1 rounded-[7px] border px-3 py-2.5 font-bold ${mode === 'join' ? 'session-gate-tab-active' : ''}`}
           >
             Entra
           </button>
         </div>
         {mode === 'join' && (
-          <>
+          <div className="session-gate-fields mt-7">
             <input
               value={sessionId}
               onChange={(event) => setSessionId(event.target.value)}
-              placeholder="ID sessione"
+              placeholder="ID quadro"
               required
-              className="mb-3 w-full rounded-[7px] border border-black/20 bg-white px-3 py-2 outline-none"
+              className="session-gate-input w-full rounded-[7px] px-3 py-3 outline-none"
             />
             <input
               value={pin}
               onChange={(event) => setPin(event.target.value)}
               placeholder="PIN o password"
               required
-              className="mb-3 w-full rounded-[7px] border border-black/20 bg-white px-3 py-2 outline-none"
+              className="session-gate-input w-full rounded-[7px] px-3 py-3 outline-none"
             />
-          </>
+          </div>
         )}
         {mode === 'create' && (
-          <>
+          <div className="session-gate-fields mt-7">
             <input
               value={sessionId}
               onChange={(event) => setSessionId(event.target.value)}
-              placeholder="Scegli ID sessione"
+              placeholder="Scegli ID quadro"
               required
-              className="mb-3 w-full rounded-[7px] border border-black/20 bg-white px-3 py-2 outline-none"
+              className="session-gate-input w-full rounded-[7px] px-3 py-3 outline-none"
             />
             <input
               value={pin}
               onChange={(event) => setPin(event.target.value)}
               placeholder="Scegli PIN o password"
               required
-              className="mb-3 w-full rounded-[7px] border border-black/20 bg-white px-3 py-2 outline-none"
+              className="session-gate-input w-full rounded-[7px] px-3 py-3 outline-none"
             />
-          </>
+          </div>
         )}
         {error && (
-          <p className="mb-3 text-sm font-bold text-[#b23b2e]">{error}</p>
+          <p className="mt-6 text-sm font-bold text-[#b23b2e]">{error}</p>
         )}
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-[7px] border-0 bg-[#3a2f1a] px-4 py-3 font-bold text-white disabled:opacity-60"
+          className="session-gate-submit mt-7 w-full rounded-[7px] px-4 py-3.5 font-bold disabled:opacity-60"
         >
           {loading
             ? 'Controllo...'
             : mode === 'create'
-              ? 'Crea sessione'
-              : 'Apri sessione'}
+              ? 'Crea quadro'
+              : 'Apri quadro'}
         </button>
       </form>
     </main>
@@ -284,6 +283,7 @@ function QuadroCapiApp({ boardSession }: { boardSession: BoardSession }) {
     null
   );
   const [openMenu, setOpenMenu] = useState<'load' | 'save' | null>(null);
+  const [inviteCopied, setInviteCopied] = useState(false);
 
   const [modal, setModal] = useState<{
     show: boolean;
@@ -872,11 +872,26 @@ function QuadroCapiApp({ boardSession }: { boardSession: BoardSession }) {
     });
 
     if (!response.ok) {
-      await showAlert('Non è stato possibile eliminare la sessione.');
+      await showAlert('Non è stato possibile eliminare il quadro.');
       return;
     }
 
     window.location.href = window.location.pathname;
+  };
+
+  const handleCopyInvite = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+    } catch {
+      const input = document.createElement('input');
+      input.value = window.location.href;
+      document.body.appendChild(input);
+      input.select();
+      document.execCommand('copy');
+      input.remove();
+    }
+    setInviteCopied(true);
+    window.setTimeout(() => setInviteCopied(false), 1800);
   };
 
   const handleImportJSON = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1169,9 +1184,9 @@ function QuadroCapiApp({ boardSession }: { boardSession: BoardSession }) {
         <button
           onClick={handleDestroySession}
           className={ACTION_BTN_CLASS}
-          title="Elimina sessione"
+          title="Elimina quadro"
         >
-          🗑️ Elimina sessione
+          🗑️ Elimina quadro
         </button>
       </div>
       <button
@@ -1179,17 +1194,6 @@ function QuadroCapiApp({ boardSession }: { boardSession: BoardSession }) {
         onClick={() => setIsSidebarMobileOpen((open) => !open)}
       >
         {isSidebarMobileOpen ? '❌ Chiudi' : '☰ Capi'}
-      </button>
-      <button
-        type="button"
-        title="Copia invito alla sessione"
-        className="absolute right-4 top-2 z-[200] rounded-[6px] border border-white/40 bg-black/40 px-3 py-1.5 text-[13px] font-bold text-white backdrop-blur-[4px]"
-        onClick={(event) => {
-          event.stopPropagation();
-          void navigator.clipboard?.writeText(window.location.href);
-        }}
-      >
-        ID: {boardSession.id} · Copia invito
       </button>
       <div className="flex flex-1 min-h-0 relative">
         {isSidebarMobileOpen && (
@@ -1227,6 +1231,9 @@ function QuadroCapiApp({ boardSession }: { boardSession: BoardSession }) {
               }
             }}
             onDestroySession={handleDestroySession}
+            sessionId={boardSession.id}
+            inviteCopied={inviteCopied}
+            onCopyInvite={handleCopyInvite}
           />
         </div>
 

@@ -46,14 +46,25 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const room = await liveblocks.getRoom(roomId);
+    let room;
+    try {
+      room = await liveblocks.getRoom(roomId);
+    } catch {
+      const sessions = await liveblocks.getRooms({
+        limit: 100,
+        query: { metadata: { sessionId: id } },
+      });
+      room = sessions.data.find((candidate) => candidate.metadata.pin === pin);
+      if (!room) return errorResponse('ID sessione o PIN non validi.', 403);
+    }
+
     const roomPin = room.metadata.pin;
     if (room.metadata.sessionId !== id || roomPin !== pin) {
       return errorResponse('ID sessione o PIN non validi.', 403);
     }
 
     if (action === 'delete') {
-      await liveblocks.deleteRoom(roomId);
+      await liveblocks.deleteRoom(room.id);
     }
 
     return NextResponse.json({ ok: true });
