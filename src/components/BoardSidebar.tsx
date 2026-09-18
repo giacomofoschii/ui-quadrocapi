@@ -153,10 +153,10 @@ export function BoardSidebar({
           🗑️ Elimina sessione
         </button>
       </div>
-      <div className="pool-label text-[12.5px] m-[0_4px_8px] font-medium">
+      <div className="sidebar-pool pool-label text-[12.5px] m-[0_4px_8px] font-medium">
         In che staff li mettiamo?
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto p-[4px] flex flex-wrap content-start gap-[10px]">
+      <div className="sidebar-pool min-h-0 flex-1 overflow-y-auto p-[4px] flex flex-wrap content-start gap-[10px]">
         {cards.filter((c) => c.groupId === null).length === 0 ? (
           <div className="pool-empty font-['Space_Grotesk'] text-[15px] p-[20px_6px] w-full">
             I capi sono finiti.
@@ -169,7 +169,7 @@ export function BoardSidebar({
             .map((card) => renderCard(card, false))
         )}
       </div>
-      <div className="mt-3 shrink-0 rounded-[6px] border border-[rgba(255,255,255,0.4)] bg-[rgba(0,0,0,0.4)] px-[12px] py-[8px] backdrop-blur-[4px]">
+      <div className="sidebar-quadro-box mt-3 shrink-0 rounded-[6px] border border-[rgba(255,255,255,0.4)] bg-[rgba(0,0,0,0.4)] px-[12px] py-[8px] backdrop-blur-[4px]">
         <div
           className="mb-1 text-[11px] font-bold uppercase tracking-[0.04em]"
           style={{ color: '#FFFFFF' }}
@@ -200,7 +200,7 @@ export function BoardSidebar({
       </div>
       {/* ---------- AREA LOGIN (IN FONDO ALLA SIDEBAR) ---------- */}
       <div
-        className="pt-3 border-t border-[rgba(255,255,255,0.15)] shrink-0"
+        className="sidebar-login-box pt-3 border-t border-[rgba(255,255,255,0.15)] shrink-0"
         style={{ marginTop: 5 }}
       >
         {session ? (

@@ -521,6 +521,18 @@ button[class*='border-[#2E6E9E]'] {
     border-bottom: 1px solid rgba(255, 255, 255, 0.15);
   }
 
+  .sidebar-quadro-box {
+    order: 1;
+  }
+
+  .sidebar-login-box {
+    order: 2;
+  }
+
+  .sidebar-pool {
+    order: 3;
+  }
+
   .mobile-sidebar-actions button,
   .mobile-sidebar-actions label {
     min-height: 42px;
