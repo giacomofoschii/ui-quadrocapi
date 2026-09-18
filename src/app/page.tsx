@@ -1203,12 +1203,12 @@ function QuadroCapiApp({ boardSession }: { boardSession: BoardSession }) {
       <div className="flex flex-1 min-h-0 relative">
         {isSidebarMobileOpen && (
           <div
-            className="mobile-sidebar-overlay absolute inset-0 bg-black/60 z-[140] backdrop-blur-sm"
+            className="mobile-sidebar-overlay absolute inset-0 bg-black/60 z-[185] backdrop-blur-sm"
             onClick={() => setIsSidebarMobileOpen(false)}
           />
         )}
         <div
-          className={`mobile-sidebar-shell z-[150] h-full transition-transform duration-300 ease-in-out ${isSidebarMobileOpen ? 'mobile-sidebar-open' : ''}`}
+          className={`mobile-sidebar-shell z-[190] h-full transition-transform duration-300 ease-in-out ${isSidebarMobileOpen ? 'mobile-sidebar-open' : ''}`}
         >
           <BoardSidebar
             cards={cards}
