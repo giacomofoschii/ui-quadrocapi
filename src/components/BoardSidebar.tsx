@@ -169,18 +169,18 @@ export function BoardSidebar({
             .map((card) => renderCard(card, false))
         )}
       </div>
-      <div className="mt-3 shrink-0 rounded-[7px] border border-[rgba(255,255,255,0.25)] bg-[rgba(0,0,0,0.22)] p-2">
+      <div className="mt-3 shrink-0 rounded-[6px] border border-[rgba(255,255,255,0.4)] bg-[rgba(0,0,0,0.4)] px-[12px] py-[8px] backdrop-blur-[4px]">
         <div className="mb-1 text-[11px] font-bold uppercase tracking-[0.04em] text-white/70">
           Quadro
         </div>
         <div className="flex items-center gap-2">
-          <span className="min-w-0 flex-1 truncate text-[13px] font-bold text-white">
+          <span className="min-w-0 flex-1 truncate font-['Work_Sans'] text-[13px] font-bold text-white">
             {sessionId}
           </span>
           <button
             type="button"
             onClick={onCopyInvite}
-            className="shrink-0 rounded-[6px] border border-white/40 bg-black/30 px-2 py-1 text-[11px] font-bold text-white hover:bg-black/55"
+            className="shrink-0 flex items-center gap-[6px] rounded-[6px] border border-[rgba(255,255,255,0.4)] bg-[rgba(0,0,0,0.4)] px-[12px] py-[6px] font-['Work_Sans'] text-[13px] font-bold text-white cursor-pointer backdrop-blur-[4px] hover:bg-[rgba(0,0,0,0.7)] hover:border-[rgba(255,255,255,0.8)] transition-all duration-200"
           >
             {inviteCopied ? 'Copiato' : 'Copia invito'}
           </button>
