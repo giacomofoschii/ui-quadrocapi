@@ -1,3 +1,9 @@
+## [1.21.4](https://github.com/giacomofoschii/ui-quadrocapi/compare/v1.21.3...v1.21.4) (2026-09-18)
+
+### Bug Fixes
+
+- added separator in sidebar ([6aca12a](https://github.com/giacomofoschii/ui-quadrocapi/commit/6aca12a536557d7daf6e5a1518e9c959a1c6b3cd))
+
 ## [1.21.3](https://github.com/giacomofoschii/ui-quadrocapi/compare/v1.21.2...v1.21.3) (2026-09-18)
 
 ### Bug Fixes
