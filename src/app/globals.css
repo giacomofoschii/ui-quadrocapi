@@ -333,11 +333,17 @@ button[class*='border-[#2E6E9E]'] {
 }
 
 .session-gate-tabs {
+  margin-bottom: 28px;
+  margin-right: auto;
+  margin-left: auto;
+  box-sizing: border-box;
   background: rgba(58, 47, 26, 0.08);
   border: 1px solid rgba(58, 47, 26, 0.14);
 }
 
 .session-gate-tab {
+  box-sizing: border-box;
+  font-size: 14px;
   border-color: rgba(58, 47, 26, 0.18);
   background: var(--tag-bg);
   color: #3a2f1a;
@@ -350,7 +356,7 @@ button[class*='border-[#2E6E9E]'] {
 
 .session-gate-tab:hover {
   transform: translateY(-1px);
-  background: #fffaf0;
+  background: #e4d19c;
 }
 
 .session-gate-tab-active {
@@ -360,13 +366,21 @@ button[class*='border-[#2E6E9E]'] {
   box-shadow: 0 3px 8px rgba(47, 122, 92, 0.28);
 }
 
+.session-gate-tab-active:hover {
+  background: #256249;
+}
+
 .session-gate-fields {
+  margin-top: 28px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 10px;
 }
 
 .session-gate-input {
+  box-sizing: border-box;
+  min-width: 0;
+  font-size: 14px;
   border: 1px solid rgba(58, 47, 26, 0.2);
   background: var(--paper);
   color: var(--ink);
@@ -380,6 +394,12 @@ button[class*='border-[#2E6E9E]'] {
 }
 
 .session-gate-submit {
+  box-sizing: border-box;
+  display: block;
+  margin-right: auto;
+  margin-left: auto;
+  font-size: 14px;
+  margin-top: 28px;
   border: 1px solid #2a1f0a;
   background: #3a2f1a;
   color: white;
@@ -388,6 +408,12 @@ button[class*='border-[#2E6E9E]'] {
   transition:
     background 0.2s ease,
     transform 0.2s ease;
+}
+
+.session-gate-tab,
+.session-gate-input,
+.session-gate-submit {
+  font-family: 'Work Sans', sans-serif;
 }
 
 .session-gate-submit:hover:not(:disabled) {
