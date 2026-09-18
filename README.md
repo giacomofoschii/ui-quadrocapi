@@ -17,6 +17,7 @@ La decisione del Quadro Capi per il nuovo anno scout è uno degli snodi centrali
 
 - 📡 **Collaborazione in Tempo Reale**: Lavora sulla stessa lavagna contemporaneamente agli altri capi (in stile Figma o Miro). I movimenti dei cartellini, i disegni a mano libera e i cursori del mouse sono sincronizzati all'istante per tutti gli utenti connessi.
 - 👤 **Accesso Google & Ospiti**: Accedi con il tuo account Google per mostrare il tuo nome e la tua foto, oppure entra senza registrazione: il sistema ti assegnerà automaticamente un simpatico nome in incognito (es. _Lupo Misterioso_, _Falco Anonimo_).
+- 🔒 **Quadri Privati**: Crea un quadro protetto da ID e PIN condivisi, oppure entra in uno già esistente inserendo le stesse credenziali. Un pulsante "Copia invito" nella sidebar permette di condividere rapidamente il link di accesso con il resto della Co.Ca.
 - 🖱️ **Composizione Staff Visuale**: Interfaccia **drag & drop** intuitiva per assegnare rapidamente i capi alle branche L/C, E/G e R/S.
 - 📛 **Anagrafica e Formazione**: Visualizzazione chiara dei capi della Co.Ca. con il rispettivo iter formativo (Tirocinio, CFM, CFA) evidenziato tramite **badge**.
 - 📑 **Lavagne Multiple**: Gestione di più "board" contemporaneamente (in stile fogli di calcolo Excel), perfette per elaborare e confrontare diverse opzioni di Quadro Capi (es. "Ipotesi A", "Ipotesi B").
@@ -34,6 +35,22 @@ La decisione del Quadro Capi per il nuovo anno scout è uno degli snodi centrali
 - **Autenticazione:** NextAuth.js (Google Provider)
 - **Cloud Storage:** Google Drive API REST
 - **Hosting:** Vercel
+
+## 🔑 Variabili d'ambiente
+
+Per lo sviluppo locale, crea un file `.env.local` nella root del progetto con le seguenti chiavi:
+
+```text
+GOOGLE_CLIENT_ID=...
+GOOGLE_CLIENT_SECRET=...
+NEXTAUTH_URL=...
+NEXTAUTH_SECRET=...
+LIVEBLOCKS_SECRET_KEY=...
+```
+
+- `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`: credenziali OAuth per il login Google e l'integrazione con Google Drive.
+- `NEXTAUTH_URL` / `NEXTAUTH_SECRET`: configurazione di NextAuth.js.
+- `LIVEBLOCKS_SECRET_KEY`: chiave segreta del progetto [Liveblocks](https://liveblocks.io/dashboard/apikeys) (deve iniziare con `sk_`), usata per creare/validare le sessioni dei quadri privati.
 
 ## 🐳 Docker
 
