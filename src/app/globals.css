@@ -395,6 +395,10 @@ button[class*='border-[#2E6E9E]'] {
   .mobile-sidebar-shell {
     position: absolute;
     display: block;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    height: 100%;
     transform: translateX(-100%);
   }
 
@@ -435,11 +439,13 @@ button[class*='border-[#2E6E9E]'] {
   #sidebar {
     width: min(250px, calc(100vw - 24px));
     min-width: min(250px, calc(100vw - 24px));
+    height: 100%;
+    box-sizing: border-box;
     padding: 14px 10px 12px;
   }
 
   .mobile-main {
-    height: auto;
+    height: 0;
     flex: 1 1 0%;
     min-width: 0;
     min-height: 0;
@@ -454,6 +460,7 @@ button[class*='border-[#2E6E9E]'] {
     width: 100%;
     min-width: 0;
     min-height: 0;
+    height: 0;
     overflow-x: auto;
     overflow-y: auto;
     overscroll-behavior: contain;
@@ -475,6 +482,7 @@ button[class*='border-[#2E6E9E]'] {
     min-width: 2000px;
     width: 2000px;
     height: 1500px;
+    min-height: 1500px;
     touch-action: pan-x pan-y;
   }
 

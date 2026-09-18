@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import type { Session } from 'next-auth';
+import { getSession, signOut } from 'next-auth/react';
 
 export type DriveFile = {
   id: string;
@@ -43,12 +44,20 @@ export function useGoogleDrive({
   }>({ show: false, files: [], loading: false });
 
   const getToken = async () => {
-    const token = session?.accessToken;
+    const currentSession = await getSession();
+    const token = currentSession?.accessToken ?? session?.accessToken;
     if (!token) {
       await showAlert('Errore di autenticazione. Riprova il login.');
       return null;
     }
     return token;
+  };
+
+  const handleUnauthorized = async () => {
+    await signOut({ redirect: false });
+    await showAlert(
+      'La sessione Google è scaduta. Accedi di nuovo per usare Drive.'
+    );
   };
 
   const handleSaveToDrive = async () => {
@@ -89,6 +98,10 @@ export function useGoogleDrive({
           body: form,
         }
       );
+      if (response.status === 401) {
+        await handleUnauthorized();
+        return;
+      }
       if (!response.ok) throw new Error('Upload fallito');
 
       await showAlert(
@@ -112,6 +125,11 @@ export function useGoogleDrive({
         `https://www.googleapis.com/drive/v3/files?q=${query}&fields=files(id,name,createdTime)`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
+      if (response.status === 401) {
+        await handleUnauthorized();
+        setDriveModal({ show: false, files: [], loading: false });
+        return;
+      }
       if (!response.ok) throw new Error('Drive request fallita');
       const data = (await response.json()) as { files?: DriveFile[] };
       setDriveModal({ show: true, files: data.files ?? [], loading: false });
@@ -131,6 +149,10 @@ export function useGoogleDrive({
         `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
+      if (response.status === 401) {
+        await handleUnauthorized();
+        return;
+      }
       if (!response.ok) throw new Error('Download fallito');
       onFileLoaded(fileName, await response.json());
     } catch {

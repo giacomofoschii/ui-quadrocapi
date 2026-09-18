@@ -10,7 +10,13 @@ import { ClientSideSuspense } from '@liveblocks/react';
 import { LiveList } from '@liveblocks/client';
 
 import { useSession, signIn, signOut } from 'next-auth/react';
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  useSyncExternalStore,
+} from 'react';
 import Image from 'next/image';
 import html2canvas from 'html2canvas';
 
@@ -45,7 +51,144 @@ const INITIAL_BOARDS: Board[] = [
   },
 ];
 
-function QuadroCapiApp() {
+type BoardSession = {
+  id: string;
+  pin: string;
+  roomId: string;
+};
+
+function createRoomId(id: string) {
+  let hash = 2166136261;
+  for (const character of id) {
+    hash ^= character.charCodeAt(0);
+    hash = Math.imul(hash, 16777619);
+  }
+  return `quadrocapi-${(hash >>> 0).toString(36)}`;
+}
+
+function SessionGate({
+  onEnter,
+}: {
+  onEnter: (session: BoardSession) => void;
+}) {
+  const [mode, setMode] = useState<'create' | 'join'>('create');
+  const [sessionId, setSessionId] = useState('');
+  const [pin, setPin] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const submit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setError('');
+    const id = sessionId.trim();
+    const sessionPin = pin.trim();
+    if (!id || !sessionPin) {
+      setError('Inserisci sia l’ID sia il PIN.');
+      return;
+    }
+    setLoading(true);
+    const roomId = createRoomId(id);
+    const response = await fetch('/api/board-sessions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: mode, id, pin: sessionPin, roomId }),
+    });
+    setLoading(false);
+    if (!response.ok) {
+      const data = (await response.json()) as { error?: string };
+      setError(data.error ?? 'Impossibile aprire la sessione.');
+      return;
+    }
+    const query = `?session=${encodeURIComponent(id)}&pin=${encodeURIComponent(sessionPin)}`;
+    window.history.replaceState(null, '', query);
+    onEnter({ id, pin: sessionPin, roomId });
+  };
+
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-[var(--wood-dark)] p-5">
+      <form
+        onSubmit={submit}
+        className="w-full max-w-[420px] rounded-[14px] border border-white/20 bg-[var(--paper)] p-6 text-[var(--ink)] shadow-2xl"
+      >
+        <h1 className="m-0 font-['Space_Grotesk'] text-3xl font-bold text-[#3a2f1a]">
+          Una nuova lavagna
+        </h1>
+        <p className="mb-5 mt-2 font-['Work_Sans'] text-sm text-[#6b5a3c]">
+          Crea una sessione privata oppure entra con l&apos;ID e il PIN
+          condivisi.
+        </p>
+        <div className="mb-4 flex gap-2">
+          <button
+            type="button"
+            onClick={() => setMode('create')}
+            className={`flex-1 rounded-[7px] border px-3 py-2 font-bold ${mode === 'create' ? 'bg-[#2f7a5c] text-white' : 'bg-transparent text-[#3a2f1a]'}`}
+          >
+            Crea sessione
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode('join')}
+            className={`flex-1 rounded-[7px] border px-3 py-2 font-bold ${mode === 'join' ? 'bg-[#2f7a5c] text-white' : 'bg-transparent text-[#3a2f1a]'}`}
+          >
+            Entra
+          </button>
+        </div>
+        {mode === 'join' && (
+          <>
+            <input
+              value={sessionId}
+              onChange={(event) => setSessionId(event.target.value)}
+              placeholder="ID sessione"
+              required
+              className="mb-3 w-full rounded-[7px] border border-black/20 bg-white px-3 py-2 outline-none"
+            />
+            <input
+              value={pin}
+              onChange={(event) => setPin(event.target.value)}
+              placeholder="PIN o password"
+              required
+              className="mb-3 w-full rounded-[7px] border border-black/20 bg-white px-3 py-2 outline-none"
+            />
+          </>
+        )}
+        {mode === 'create' && (
+          <>
+            <input
+              value={sessionId}
+              onChange={(event) => setSessionId(event.target.value)}
+              placeholder="Scegli ID sessione"
+              required
+              className="mb-3 w-full rounded-[7px] border border-black/20 bg-white px-3 py-2 outline-none"
+            />
+            <input
+              value={pin}
+              onChange={(event) => setPin(event.target.value)}
+              placeholder="Scegli PIN o password"
+              required
+              className="mb-3 w-full rounded-[7px] border border-black/20 bg-white px-3 py-2 outline-none"
+            />
+          </>
+        )}
+        {error && (
+          <p className="mb-3 text-sm font-bold text-[#b23b2e]">{error}</p>
+        )}
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full rounded-[7px] border-0 bg-[#3a2f1a] px-4 py-3 font-bold text-white disabled:opacity-60"
+        >
+          {loading
+            ? 'Controllo...'
+            : mode === 'create'
+              ? 'Crea sessione'
+              : 'Apri sessione'}
+        </button>
+      </form>
+    </main>
+  );
+}
+
+function QuadroCapiApp({ boardSession }: { boardSession: BoardSession }) {
   const [{ cursor }, updateMyPresence] = useMyPresence();
   // --- STATO DELLE LAVAGNE & AUTOSAVE ---
   const { data: session } = useSession();
@@ -146,6 +289,7 @@ function QuadroCapiApp() {
     show: boolean;
     message: string;
     isPrompt?: boolean;
+    isWarning?: boolean;
     onConfirm: (val?: string) => void;
     onCancel?: () => void;
   }>({ show: false, message: '', onConfirm: () => {} });
@@ -550,6 +694,7 @@ function QuadroCapiApp() {
         show: true,
         message,
         isPrompt: false,
+        isWarning: true,
         onConfirm: () => {
           setModal({ show: false, message: '', onConfirm: () => {} });
           resolve(true);
@@ -568,6 +713,7 @@ function QuadroCapiApp() {
         show: true,
         message,
         isPrompt: false,
+        isWarning: false,
         onConfirm: () => {
           setModal({ show: false, message: '', onConfirm: () => {} });
           resolve();
@@ -586,6 +732,7 @@ function QuadroCapiApp() {
         show: true,
         message,
         isPrompt: true,
+        isWarning: false,
         onConfirm: (val?: string) => {
           setModal({
             show: false,
@@ -705,6 +852,31 @@ function QuadroCapiApp() {
     link.href = canvas.toDataURL();
     link.download = 'quadrocapi.png';
     link.click();
+  };
+
+  const handleDestroySession = async () => {
+    const confirmed = await showConfirm(
+      'Sei sicuro di voler eliminare il quadro? Se non è stato salvato verrà perso per sempre.'
+    );
+    if (!confirmed) return;
+
+    const response = await fetch('/api/board-sessions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'delete',
+        id: boardSession.id,
+        pin: boardSession.pin,
+        roomId: boardSession.roomId,
+      }),
+    });
+
+    if (!response.ok) {
+      await showAlert('Non è stato possibile eliminare la sessione.');
+      return;
+    }
+
+    window.location.href = window.location.pathname;
   };
 
   const handleImportJSON = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -994,12 +1166,30 @@ function QuadroCapiApp() {
         >
           📸 Esporta PNG
         </button>
+        <button
+          onClick={handleDestroySession}
+          className={ACTION_BTN_CLASS}
+          title="Elimina sessione"
+        >
+          🗑️ Elimina sessione
+        </button>
       </div>
       <button
         className={`mobile-menu-toggle absolute top-[8px] left-[16px] z-[200] ${ACTION_BTN_CLASS}`}
         onClick={() => setIsSidebarMobileOpen((open) => !open)}
       >
         {isSidebarMobileOpen ? '❌ Chiudi' : '☰ Capi'}
+      </button>
+      <button
+        type="button"
+        title="Copia invito alla sessione"
+        className="absolute right-4 top-2 z-[200] rounded-[6px] border border-white/40 bg-black/40 px-3 py-1.5 text-[13px] font-bold text-white backdrop-blur-[4px]"
+        onClick={(event) => {
+          event.stopPropagation();
+          void navigator.clipboard?.writeText(window.location.href);
+        }}
+      >
+        ID: {boardSession.id} · Copia invito
       </button>
       <div className="flex flex-1 min-h-0 relative">
         {isSidebarMobileOpen && (
@@ -1036,6 +1226,7 @@ function QuadroCapiApp() {
                 await signOut();
               }
             }}
+            onDestroySession={handleDestroySession}
           />
         </div>
 
@@ -1201,6 +1392,15 @@ function QuadroCapiApp() {
                 marginBottom: modal.isPrompt ? '20px' : '24px',
               }}
             >
+              {modal.isWarning && (
+                <div
+                  className="mb-3 text-[34px]"
+                  role="img"
+                  aria-label="Attenzione"
+                >
+                  ⚠️
+                </div>
+              )}
               {modal.message}
             </div>
             {modal.isPrompt && (
@@ -1252,9 +1452,27 @@ function QuadroCapiApp() {
 }
 
 export default function Page() {
+  const sessionQuery = useSyncExternalStore(
+    () => () => {},
+    () => window.location.search,
+    () => ''
+  );
+  const [createdSession, setCreatedSession] = useState<BoardSession | null>(
+    null
+  );
+  const params = new URLSearchParams(sessionQuery);
+  const id = params.get('session');
+  const pin = params.get('pin');
+  const urlSession = id && pin ? { id, pin, roomId: createRoomId(id) } : null;
+  const boardSession = createdSession ?? urlSession;
+
+  if (!boardSession) {
+    return <SessionGate onEnter={setCreatedSession} />;
+  }
+
   return (
     <RoomProvider
-      id="lavagna-principale"
+      id={boardSession.roomId}
       initialPresence={{ cursor: null }}
       initialStorage={{ boards: new LiveList(INITIAL_BOARDS) }}
     >
@@ -1265,7 +1483,7 @@ export default function Page() {
           </div>
         }
       >
-        <QuadroCapiApp />
+        <QuadroCapiApp boardSession={boardSession} />
       </ClientSideSuspense>
     </RoomProvider>
   );
