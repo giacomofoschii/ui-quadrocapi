@@ -29,6 +29,7 @@ type BoardSidebarProps = {
   session: Session | null;
   onSignIn: () => void | Promise<void>;
   onSignOut: () => void | Promise<void>;
+  onDestroySession: () => void | Promise<void>;
 };
 
 export function BoardSidebar({
@@ -50,6 +51,7 @@ export function BoardSidebar({
   session,
   onSignIn,
   onSignOut,
+  onDestroySession,
 }: BoardSidebarProps) {
   return (
     <aside
@@ -140,6 +142,9 @@ export function BoardSidebar({
         </button>
         <button type="button" onClick={onSaveDrive} disabled={!session}>
           💾 Salva su Drive
+        </button>
+        <button type="button" onClick={onDestroySession}>
+          🗑️ Elimina sessione
         </button>
       </div>
       <div className="pool-label text-[12.5px] m-[0_4px_8px] font-medium">
