@@ -170,24 +170,39 @@ export function BoardSidebar({
         )}
       </div>
       <div className="mt-3 shrink-0 rounded-[6px] border border-[rgba(255,255,255,0.4)] bg-[rgba(0,0,0,0.4)] px-[12px] py-[8px] backdrop-blur-[4px]">
-        <div className="mb-1 text-[11px] font-bold uppercase tracking-[0.04em] text-white/70">
-          Quadro
+        <div
+          className="mb-1 text-[11px] font-bold uppercase tracking-[0.04em]"
+          style={{ color: '#FFFFFF' }}
+        >
+          Id Quadro:
         </div>
         <div className="flex items-center gap-2">
-          <span className="min-w-0 flex-1 truncate font-['Work_Sans'] text-[13px] font-bold text-white">
+          <span
+            className="min-w-0 flex-1 truncate font-['Work_Sans'] text-[13px] font-bold leading-none"
+            style={{ color: '#FFFFFF' }}
+          >
             {sessionId}
           </span>
           <button
             type="button"
             onClick={onCopyInvite}
-            className="shrink-0 flex items-center gap-[6px] rounded-[6px] border border-[rgba(255,255,255,0.4)] bg-[rgba(0,0,0,0.4)] px-[12px] py-[6px] font-['Work_Sans'] text-[13px] font-bold text-white cursor-pointer backdrop-blur-[4px] hover:bg-[rgba(0,0,0,0.7)] hover:border-[rgba(255,255,255,0.8)] transition-all duration-200"
+            className="shrink-0 gap-[6px] rounded-[6px] border border-[rgba(255,255,255,0.4)] bg-[rgba(0,0,0,0.4)] px-[12px] py-[6px] font-['Work_Sans'] text-[13px] font-bold cursor-pointer backdrop-blur-[4px] hover:bg-[rgba(0,0,0,0.7)] hover:border-[rgba(255,255,255,0.8)] transition-all duration-200"
+            style={{
+              color: '#FFFFFF',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
           >
             {inviteCopied ? 'Copiato' : 'Copia invito'}
           </button>
         </div>
       </div>
       {/* ---------- AREA LOGIN (IN FONDO ALLA SIDEBAR) ---------- */}
-      <div className="mt-3 pt-3 border-t border-[rgba(255,255,255,0.15)] shrink-0">
+      <div
+        className="pt-3 border-t border-[rgba(255,255,255,0.15)] shrink-0"
+        style={{ marginTop: 5 }}
+      >
         {session ? (
           <div className="flex items-center gap-[6px] px-[10px] py-[6px] rounded-[6px] border border-[rgba(255,255,255,0.4)] bg-[rgba(0,0,0,0.4)] font-['Work_Sans'] font-bold text-[13px] text-white backdrop-blur-[4px] shadow-sm">
             <div
