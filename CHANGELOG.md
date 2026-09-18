@@ -1,3 +1,9 @@
+## [1.21.3](https://github.com/giacomofoschii/ui-quadrocapi/compare/v1.21.2...v1.21.3) (2026-09-18)
+
+### Bug Fixes
+
+- fixd name release ([e1b7b53](https://github.com/giacomofoschii/ui-quadrocapi/commit/e1b7b53d2ca7951e21c4a8a282c257e4da566234))
+
 ## [1.21.2](https://github.com/giacomofoschii/ui-quadrocapi/compare/v1.21.1...v1.21.2) (2026-09-18)
 
 ### Bug Fixes
