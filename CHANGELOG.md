@@ -1,3 +1,17 @@
+# [1.21.0](https://github.com/giacomofoschii/ui-quadrocapi/compare/v1.20.0...v1.21.0) (2026-09-18)
+
+### Bug Fixes
+
+- fix liveblocks error in build ([c082998](https://github.com/giacomofoschii/ui-quadrocapi/commit/c082998a15177e3b6bbb2887a610dbbb51f2c3d2))
+- refactor style invite ([ca103ac](https://github.com/giacomofoschii/ui-quadrocapi/commit/ca103acec50f53b33ae3cc79123215d34d903eff))
+
+### Features
+
+- enhance session management UI and functionality with new session invite feature ([c0abd0a](https://github.com/giacomofoschii/ui-quadrocapi/commit/c0abd0a35cfb815addd4e335b1618e31b0b9f20e))
+- implement session management with Google OAuth and add board session API ([10eb08b](https://github.com/giacomofoschii/ui-quadrocapi/commit/10eb08bc6e4a9ab2eb34383735f85d76add44406))
+- style copy session white ([ca92285](https://github.com/giacomofoschii/ui-quadrocapi/commit/ca922850757e3ce32281079d3c0a0798a2ebda40))
+- udate style for login ([88f6ad0](https://github.com/giacomofoschii/ui-quadrocapi/commit/88f6ad07db059652a553f54552946ee1686e4a24))
+
 # [1.20.0](https://github.com/giacomofoschii/ui-quadrocapi/compare/v1.19.0...v1.20.0) (2026-09-16)
 
 ### Features
