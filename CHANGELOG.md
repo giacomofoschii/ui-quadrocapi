@@ -1,3 +1,9 @@
+## [1.21.2](https://github.com/giacomofoschii/ui-quadrocapi/compare/v1.21.1...v1.21.2) (2026-09-18)
+
+### Bug Fixes
+
+- fixed canvas mobile ([15daa60](https://github.com/giacomofoschii/ui-quadrocapi/commit/15daa60a533083cf85cbad7cb9953f3f6508a351))
+
 ## [1.21.1](https://github.com/giacomofoschii/ui-quadrocapi/compare/v1.21.0...v1.21.1) (2026-09-18)
 
 ### Bug Fixes
