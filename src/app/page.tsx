@@ -946,6 +946,7 @@ function QuadroCapiApp({ boardSession }: { boardSession: BoardSession }) {
     setEditingGroupColor(null);
     setTabMenuOpen(null);
 
+    htmlEl.setPointerCapture(e.pointerId);
     htmlEl.classList.add('dragging-origin');
     const rect = htmlEl.getBoundingClientRect();
     const ghost = htmlEl.cloneNode(true) as HTMLDivElement;
