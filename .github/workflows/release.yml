@@ -15,7 +15,7 @@ jobs:
       pull-requests: write
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0 # Necessario per leggere tutta la storia dei commit
           token: ${{ secrets.RELEASE_PAT }} # Usa il Personal Access Token per saltare i blocchi dei ruleset
