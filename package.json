@@ -10,7 +10,7 @@
     "prepare": "husky"
   },
   "dependencies": {
-    "@liveblocks/client": "^3.24.1",
+    "@liveblocks/client": "^3.24.2",
     "@liveblocks/node": "^3.24.1",
     "@liveblocks/react": "^3.24.1",
     "html2canvas": "^1.4.1",
